@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Satellite Control Center - Advanced Telemetry</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        
+        .ui-top {
+            position: absolute; top: 20px; right: 20px; color: #00ff00;
+            background: rgba(0,15,0,0.8); padding: 12px; border: 1px solid #00ff00;
+            z-index: 100; pointer-events: none; font-size: 12px;
+        }
+
+        #sidebar-container {
+            position: absolute; left: 0; top: 5%; height: 90%; width: 250px;
+            transform: translateX(-220px); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            z-index: 200; display: flex;
+        }
+        #sidebar-container:hover { transform: translateX(0); }
+
+        #sat-list-wrapper {
+            width: 220px; height: 100%; background: rgba(0, 10, 0, 0.95);
+            border: 1px solid #00ff00; border-left: none; display: flex; flex-direction: column;
+        }
+
+        .filter-section { padding: 15px; border-bottom: 2px solid #00ff00; }
+        select {
+            width: 100%; background: #000; color: #00ff00; border: 1px solid #00ff00;
+            padding: 5px; font-family: monospace; cursor: pointer;
+        }
+
+        #sat-list { flex-grow: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #00ff00 #001100; }
+
+        .sidebar-tab {
+            width: 30px; height: 100px; background: #00ff00; color: black;
+            display: flex; align-items: center; justify-content: center;
+            writing-mode: vertical-rl; font-weight: bold; font-size: 11px;
+            cursor: pointer; align-self: center; border-radius: 0 5px 5px 0;
+        }
+
+        .sat-item {
+            color: #00ff00; padding: 10px; cursor: pointer; border-bottom: 1px solid #003300;
+            font-size: 11px; transition: 0.1s;
+        }
+        .sat-item:hover { background: rgba(0, 255, 0, 0.15); }
+        .sat-item.active { background: #00ff00; color: black; font-weight: bold; }
+
+        #info-panel {
+            position: absolute; bottom: 20px; right: 20px; color: #00ff00;
+            background: rgba(0,5,0,0.95); padding: 20px; border: 1px solid #00ff00;
+            display: none; width: 350px; z-index: 101; box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        }
+        .label { color: #008800; font-size: 10px; text-transform: uppercase; display: block; margin-top: 5px;}
+        .value { color: #fff; font-size: 13px; margin-bottom: 5px; display: block; border-bottom: 1px solid #002200; padding-bottom: 2px;}
+        .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .highlight { color: #00ff00; font-weight: bold; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar-container">
+        <div id="sat-list-wrapper">
+            <div class="filter-section">
+                <span class="label">SORGENTE_DATI</span>
+                <select id="group-select" onchange="changeCategory()">
+                    <option value="starlink">Starlink (SpaceX)</option>
+                    <option value="visual">Punti più Luminosi</option>
+                    <option value="gps-ops">GPS (Navigazione)</option>
+                    <option value="weather">Meteorologici</option>
+                    <option value="science">Scientifici</option>
+                    <option value="iridium">Iridium NEXT</option>
+                    <option value="stations">Stazioni Spaziali (ISS)</option>
+                </select>
+            </div>
+            <div id="sat-list"></div>
+        </div>
+        <div class="sidebar-tab">SATELLITE_NAV</div>
+    </div>
+
+    <div class="ui-top">
+        <strong>GLOBAL_TRACKER: ONLINE</strong><br>
+        ZURICH_STATION | SATS: <span id="count">0</span>
+    </div>
+
+    <div id="info-panel">
+        <div style="color:#00ff00; font-size: 14px; margin-bottom:15px; border-bottom:2px solid #00ff00; display: flex; justify-content: space-between;">
+            <span>🛰️ TELEMETRY_LINK</span>
+            <span id="sat-class" style="font-size: 10px; background: #004400; padding: 0 5px;"></span>
+        </div>
+        
+        <span class="label">NOME IDENTIFICATIVO</span>
+        <span id="sat-name" class="highlight" style="margin-bottom: 10px; display: block;"></span>
+        
+        <div class="tech-grid">
+            <div>
+                <span class="label">VELOCITÀ STIMATA</span>
+                <span id="sat-speed" class="value" style="color: #00ff00;"></span>
+            </div>
+            <div>
+                <span class="label">ALTITUDINE MEDIA</span>
+                <span id="sat-alt" class="value"></span>
+            </div>
+        </div>
+
+        <div class="tech-grid">
+            <div><span class="label">NORAD ID</span><span id="sat-id" class="value"></span></div>
+            <div><span class="label">LANCIO</span><span id="sat-date" class="value"></span></div>
+        </div>
+
+        <div class="tech-grid">
+            <div><span class="label">INCLINAZIONE</span><span id="sat-inc" class="value"></span></div>
+            <div><span class="label">PERIODO</span><span id="sat-per" class="value"></span></div>
+        </div>
+
+        <div class="tech-grid">
+            <div><span class="label">ECCENTRICITÀ</span><span id="sat-ecc" class="value"></span></div>
+            <div><span class="label">MEAN MOTION</span><span id="sat-mean" class="value"></span></div>
+        </div>
+
+        <div class="tech-grid">
+            <div><span class="label">BSTAR (ATTRITO)</span><span id="sat-bstar" class="value"></span></div>
+            <div><span class="label">ELEMENT_SET</span><span id="sat-elset" class="value"></span></div>
+        </div>
+        
+        <span class="label">MODELLO EPHEMERIS</span>
+        <span id="sat-eph" class="value"></span>
+    </div>
+
+    <script>
+        let earthImg;
+        let satellites = [];
+        let earthRadius = 250;
+        let earthRotation = 0;
+        let selectedSat = null;
+        let isOverSidebar = false;
+
+        function preload() {
+            earthImg = loadImage('mappa.jpg');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            const sidebar = document.getElementById('sidebar-container');
+            sidebar.addEventListener('mouseenter', () => isOverSidebar = true);
+            sidebar.addEventListener('mouseleave', () => isOverSidebar = false);
+            changeCategory();
+        }
+
+        async function changeCategory() {
+            const category = document.getElementById('group-select').value;
+            const listContainer = document.getElementById('sat-list');
+            listContainer.innerHTML = '<div style="color: #00ff00; padding: 20px; font-size: 10px;">DOWNLOADING TLE...</div>';
+            
+            const targetUrl = `https://celestrak.org/NORAD/elements/gp.php?GROUP=${category}&FORMAT=json`;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+            
+            try {
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                satellites = [];
+                selectedSat = null;
+                document.getElementById('info-panel').style.display = 'none';
+                listContainer.innerHTML = ''; 
+
+                data.slice(0, 100).forEach((s, i) => {
+                    // --- CALCOLI FISICI ---
+                    // Mean Motion è in orbite al giorno.
+                    let n = parseFloat(s.MEAN_MOTION); 
+                    // Periodo in secondi
+                    let periodSec = (24 * 3600) / n;
+                    // Calcolo altitudine approssimativa (km) usando la terza legge di Keplero
+                    // G * M terra = 3.986e14 m^3/s^2
+                    let a = Math.pow(3.986004418e14 * Math.pow(periodSec / (2 * Math.PI), 2), 1/3);
+                    let alt = (a / 1000) - 6371; // Sottraiamo raggio terrestre
+                    
+                    // Velocità orbitale (km/h) = (2 * PI * raggio_orbita) / periodo_ore
+                    let v = (2 * Math.PI * (alt + 6371)) / (periodSec / 3600);
+
+                    let satObj = {
+                        name: s.OBJECT_NAME,
+                        id: s.NORAD_CAT_ID,
+                        inc: radians(parseFloat(s.INCLINATION)),
+                        incDeg: s.INCLINATION,
+                        orbit: earthRadius + (alt / 20), // Scaliamo l'orbita visiva in base all'altitudine reale
+                        angle: random(TWO_PI),
+                        speed: 0.001 + (n * 0.0001), 
+                        rotation: random(TWO_PI),
+                        period: s.PERIOD + " min",
+                        launch: s.LAUNCH_DATE || "N/A",
+                        ecc: s.ECCENTRICITY,
+                        mean_m: s.MEAN_MOTION,
+                        bstar: s.BSTAR,
+                        elset: s.ELEMENT_SET_NO,
+                        eph: s.EPHEMERIS_TYPE == "0" ? "SGP4" : s.EPHEMERIS_TYPE,
+                        class: s.CLASSIFICATION_TYPE,
+                        realSpeed: v.toLocaleString('it-IT', {maximumFractionDigits: 0}) + " km/h",
+                        realAlt: alt.toLocaleString('it-IT', {maximumFractionDigits: 0}) + " km"
+                    };
+                    satellites.push(satObj);
+
+                    let div = document.createElement('div');
+                    div.className = 'sat-item';
+                    div.innerText = s.OBJECT_NAME;
+                    div.onclick = () => selectSatellite(satObj, div);
+                    listContainer.appendChild(div);
+                });
+                document.getElementById('count').innerText = satellites.length;
+            } catch (e) { 
+                listContainer.innerHTML = '<div style="color: red; padding: 20px;">FETCH_ERROR</div>';
+            }
+        }
+
+        function selectSatellite(sat, element) {
+            selectedSat = sat;
+            document.querySelectorAll('.sat-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            document.getElementById('info-panel').style.display = 'block';
+            document.getElementById('sat-name').innerText = sat.name;
+            document.getElementById('sat-id').innerText = sat.id;
+            document.getElementById('sat-inc').innerText = parseFloat(sat.incDeg).toFixed(4) + "°";
+            document.getElementById('sat-per').innerText = sat.period;
+            document.getElementById('sat-date').innerText = sat.launch;
+            document.getElementById('sat-ecc').innerText = sat.ecc;
+            document.getElementById('sat-mean').innerText = sat.mean_m;
+            document.getElementById('sat-bstar').innerText = sat.bstar;
+            document.getElementById('sat-elset').innerText = sat.elset;
+            document.getElementById('sat-eph').innerText = "MOD_TYPE: " + sat.eph;
+            document.getElementById('sat-class').innerText = "CLASS: " + sat.class;
+            document.getElementById('sat-speed').innerText = sat.realSpeed;
+            document.getElementById('sat-alt').innerText = sat.realAlt;
+        }
+
+        function draw() {
+            background(5);
+            if (!isOverSidebar) orbitControl();
+            
+            ambientLight(100);
+            pointLight(255, 255, 255, 1000, -500, 1000);
+            earthRotation += 0.002;
+
+            // TERRA
+            push();
+            rotateY(earthRotation);
+            noStroke();
+            if(earthImg) texture(earthImg);
+            sphere(earthRadius);
+            
+            // ZURIGO
+            let lat = radians(47.37);
+            let lon = radians(8.54) + HALF_PI;
+            translate(earthRadius * cos(lat) * cos(lon), -earthRadius * sin(lat), -earthRadius * cos(lat) * sin(lon));
+            fill(0, 255, 0);
+            emissiveMaterial(0, 255, 0);
+            sphere(6);
+            pop();
+
+            // SATELLITI
+            satellites.forEach(s => {
+                s.angle += s.speed;
+                push();
+                rotateY(s.rotation);
+                rotateX(s.inc);
+                
+                noFill();
+                if (s === selectedSat) {
+                    stroke(0, 255, 0);
+                    strokeWeight(2);
+                } else {
+                    stroke(255, 30);
+                    strokeWeight(0.5);
+                }
+                ellipse(0, 0, s.orbit * 2, s.orbit * 2);
+
+                let x = s.orbit * cos(s.angle);
+                let y = s.orbit * sin(s.angle);
+                translate(x, y, 0);
+                
+                noStroke();
+                if (s === selectedSat) {
+                    fill(0, 255, 0);
+                    sphere(9);
+                } else {
+                    fill(200, 200, 255);
+                    sphere(3.5);
+                }
+                pop();
+            });
+        }
+
+        function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+    </script>
+</body>
+</html>

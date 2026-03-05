@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>ISS Tracker - Radar & Location</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: monospace; }
+        
+        .dashboard {
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            color: #000;
+            background: #fff; 
+            padding: 12px; 
+            z-index: 100;
+            border: 1px solid #fff;
+            transition: all 0.2s ease;
+        }
+
+        .dashboard:hover {
+            color: #fff;
+            background: #000;
+        }
+
+        .title { font-weight: bold; margin-bottom: 5px; text-decoration: underline; }
+        #distance-ui { font-weight: bold; color: #ff0055; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="title">SYSTEM_STATUS</div>
+        ISS_LAT: <span id="lat">---</span><br>
+        ISS_LON: <span id="lon">---</span><br>
+        LOC: <span id="user-pos">RICERCA...</span><br>
+        DIST: <span id="distance-ui">--- km</span>
+    </div>
+
+    <script>
+        let earthImg;
+        let issLat = 0, issLon = 0;
+        let earthRadius = 300;
+        let issOrbitRadius = 335;
+        
+        let userLat = 47.3769, userLon = 8.5417; // Default Zurigo
+        let dataLoaded = false;
+        let textureOffset = 0; 
+        
+        // Variabili Radar
+        let radarSize = 0;
+        let radarAlpha = 255;
+
+        function preload() {
+            earthImg = loadImage('mappa.jpg');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (p) => {
+                        userLat = p.coords.latitude;
+                        userLon = p.coords.longitude;
+                        document.getElementById('user-pos').innerText = "CALIBRATA";
+                    }
+                );
+            }
+
+            setInterval(fetchISS, 3000);
+            fetchISS();
+        }
+
+        async function fetchISS() {
+            try {
+                const response = await fetch('http://api.open-notify.org/iss-now.json');
+                const data = await response.json();
+                issLat = parseFloat(data.iss_position.latitude);
+                issLon = parseFloat(data.iss_position.longitude);
+                document.getElementById('lat').innerText = issLat.toFixed(2);
+                document.getElementById('lon').innerText = issLon.toFixed(2);
+                dataLoaded = true;
+            } catch (e) { console.error("API Error"); }
+        }
+
+        function draw() {
+            background(0);
+            orbitControl();
+
+            // Calcolo distanza (Great Circle Distance)
+            let d = calculateDistance(userLat, userLon, issLat, issLon);
+            document.getElementById('distance-ui').innerText = Math.round(d) + " km";
+
+            // Sole
+            let now = new Date();
+            let timeInHours = now.getUTCHours() + now.getUTCMinutes()/60 + now.getUTCSeconds()/3600;
+            let sunLon = - (timeInHours - 12) * 15; 
+            let sunPhi = radians(sunLon) + HALF_PI;
+            let lx = cos(0) * cos(sunPhi);
+            let ly = 0;
+            let lz = -cos(0) * sin(sunPhi);
+
+            ambientLight(25); 
+            directionalLight(255, 255, 240, -lx, -ly, -lz); 
+
+            // 1. TERRA
+            push();
+            rotateY(textureOffset); 
+            noStroke();
+            texture(earthImg);
+            sphere(earthRadius);
+            pop();
+
+            // 2. EFFETTO RADAR (Sulla posizione utente)
+            drawRadar(userLat, userLon, d);
+
+            // 3. PUNTO UTENTE
+            drawMarker(userLat, userLon, earthRadius + 2, color(0, 255, 0));
+
+            // 4. ISS
+            if (dataLoaded) {
+                drawMarker(issLat, issLon, issOrbitRadius, color(255, 0, 0));
+                drawPath(issLat, issLon);
+            }
+        }
+
+        function drawRadar(lat, lon, distToIss) {
+            let theta = radians(lat);
+            let phi = radians(lon) + HALF_PI;
+            
+            // Animazione dell'onda
+            let speed = distToIss < 2000 ? 5 : 2;
+            radarSize += speed;
+            radarAlpha -= (speed * 0.8);
+
+            if (radarAlpha <= 0) {
+                radarSize = 0;
+                radarAlpha = 255;
+            }
+
+            // Coordinate del punto sulla superficie
+            let x = earthRadius * cos(theta) * cos(phi);
+            let y = -earthRadius * sin(theta);
+            let z = -earthRadius * cos(theta) * sin(phi);
+            
+            push();
+            translate(x, y, z);
+            
+            // --- SISTEMAZIONE ORIENTAMENTO ---
+            // Ruotiamo per allineare il piano del cerchio alla superficie della sfera
+            rotateY(-phi + HALF_PI + 0.3); 
+            rotateX(theta + HALF_PI); 
+            
+            noFill();
+            let radarCol = distToIss < 2000 ? color(255, 0, 80, radarAlpha) : color(0, 255, 150, radarAlpha);
+            stroke(radarCol);
+            strokeWeight(2);
+            
+            // Il cerchio ora giace "piatto" sulla superficie
+            ellipse(0, 0, radarSize, radarSize);
+            pop();
+        }
+
+        function drawMarker(lat, lon, r, col) {
+            let theta = radians(lat);
+            let phi = radians(lon) + HALF_PI;
+            let x = r * cos(theta) * cos(phi);
+            let y = -r * sin(theta);
+            let z = -r * cos(theta) * sin(phi);
+            push();
+            translate(x, y, z);
+            fill(col);
+            emissiveMaterial(col);
+            noStroke();
+            sphere(5);
+            pop();
+        }
+
+        function drawPath(lat, lon) {
+            let theta = radians(lat);
+            let phi = radians(lon) + HALF_PI;
+            let x1 = earthRadius * cos(theta) * cos(phi);
+            let y1 = -earthRadius * sin(theta);
+            let z1 = -earthRadius * cos(theta) * sin(phi);
+            let x2 = issOrbitRadius * cos(theta) * cos(phi);
+            let y2 = -issOrbitRadius * sin(theta);
+            let z2 = -issOrbitRadius * cos(theta) * sin(phi);
+            stroke(255, 0, 0, 150);
+            line(x1, y1, z1, x2, y2, z2);
+        }
+
+        // Formula di Haversine per calcolare la distanza tra due punti su una sfera
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Raggio Terra in km
+            let dLat = radians(lat2 - lat1);
+            let dLon = radians(lon2 - lon1);
+            let a = sin(dLat/2) * sin(dLat/2) +
+                    cos(radians(lat1)) * cos(radians(lat2)) * sin(dLon/2) * sin(dLon/2);
+            let c = 2 * atan2(sqrt(a), sqrt(1-a));
+            return R * c;
+        }
+
+        function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+    </script>
+</body>
+</html>
