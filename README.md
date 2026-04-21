@@ -4,9 +4,9 @@ Docenti: A. Gysin, G. Profeta
 
 Progetto 1: La conquista dello spazio
 
-# Lunar Recon System
+# Titolo progetto
 Autore: Daniele Falcone \
-[Titolo progetto](https://dadiccs.github.io/nasa/)
+[Lunar Recon System](https://dadiccs.github.io/nasa/)
 
 
 ## Introduzione e tema
