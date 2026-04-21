@@ -1,0 +1,106 @@
+{
+    "missioni": [
+        {
+            "id": "apollo11",
+            "titolo": "APOLLO 11 - Mare Tranquillitatis",
+            "lat": 0.6741,
+            "lon": 23.473,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_11_LandingSite.jpg",
+            "width": 16245,
+            "height": 1293,
+            "haov": 180,
+            "hotSpots": []
+        },
+        {
+            "id": "apollo11",
+            "titolo": "APOLLO 11 - Mare Tranquillitatis",
+            "lat": 0.19481,
+            "lon": 23.91207,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_11_Section.jpg",
+            "width": 7817,
+            "height": 2230,
+            "haov": 180,
+            "hotSpots": []
+        },
+        {
+            "id": "apollo12",
+            "titolo": "APOLLO 12 - Oceanus Procellarum",
+            "lat": -3.0124,
+            "lon": -23.4216,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_12_LandingSite.jpg",
+            "width": 16335,
+            "height": 1946,
+            "haov": 180,
+            "hotSpots": []
+        },
+        {
+            "id": "apollo17",
+            "titolo": "APOLLO 17 - Taurus-Littrow",
+            "lat": 20.1908,
+            "lon": 30.7717,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_17_3.jpg",
+            "width": 3600,
+            "height": 427,
+            "haov": 180,
+            "hotSpots": [
+                { "pitch": 12, "yaw": -52, "text": "North Massif" },
+                { "pitch": 9, "yaw": -18, "text": "Sculptured Hills" },
+                { "pitch": 10, "yaw": 22, "text": "East Massif" },
+                { "pitch": 6, "yaw": 38, "text": "Bear Mtn." },
+                { "pitch": 14, "yaw": 62, "text": "South Massif" },
+                { "pitch": 8, "yaw": 88, "text": "Family Mtn." },
+                { "pitch": -5, "yaw": -35, "text": "Camelot Crater" }
+            ]
+        },
+        {
+            "id": "apollo17",
+            "titolo": "APOLLO 17 - Taurus-Littrow",
+            "lat": 19.71151,
+            "lon": 31.21077,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_17_LandingSite.jpg",
+            "width": 16955,
+            "height": 2055,
+            "haov": 180,
+            "hotSpots": [
+                { "pitch": 0, "yaw": -42, "text": "Shorty Crater" },
+                { "pitch": 0, "yaw": -12, "text": "Camelot Crater" },
+                { "pitch": 0, "yaw": 18, "text": "Horatio Crater" },
+                { "pitch": 0, "yaw": 35, "text": "Victory Crater" }
+            ]
+            
+        },
+        {
+            "id": "apollo17",
+            "titolo": "APOLLO 17 - Taurus-Littrow",
+            "lat": 20.27116,
+            "lon": 29.85598,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_17_LandingSite2.jpg",
+            "width": 17611,
+            "height": 1790,
+            "haov": 180,
+            "hotSpots": [
+                { "pitch": -2.1, "yaw": -3.5, "text": "Challenger LM" },
+                { "pitch": 1, "yaw": -12.0, "text": "Lunar Rover (LRV)" },
+                { "pitch": -1.8, "yaw": 65.0, "text": "ALSEP Instrument Array" }
+            ]
+        },
+        {
+            "id": "apollo17",
+            "titolo": "APOLLO 17 - Taurus-Littrow",
+            "lat": 20.87581,
+            "lon": 31.66516,
+            "camera": "Hasselblad 500EL (Reseau Plate)",
+            "file": "photosphere/Apollo_17_Station5_East.jpg",
+            "width": 16810,
+            "height": 1708,
+            "haov": 180,
+            "hotSpots": []
+        }
+    ]
+}
