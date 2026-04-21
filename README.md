@@ -4,9 +4,9 @@ Docenti: A. Gysin, G. Profeta
 
 Progetto 1: La conquista dello spazio
 
-# Titolo progetto
+# LUNAR ARCHIVE EXPLORER
 Autore: Daniele Falcone \
-[Lunar Recon System](https://dadiccs.github.io/nasa/)
+[LUNAR ARCHIVE EXPLORER](https://dadiccs.github.io/nasa/)
 
 
 ## Introduzione e tema
@@ -27,15 +27,13 @@ Fluidità: L'implementazione tecnica assicura che il passaggio tra le diverse te
 
 
 ## Tecnologia usata
-Lo sviluppo si avvale delle moderne tecnologie web per il rendering grafico avanzato. Il software è basato su JavaScript (ES6+) e utilizza le API WebGL (tramite la libreria Three.js) per la gestione della pipeline 3D.
+Il sistema integra la potenza di calcolo grafico di Three.js con una gestione dinamica del DOM tramite JavaScript (ES6+). L'architettura è progettata per gestire il passaggio fluido tra l'ambiente 3D e il visualizzatore di immagini ad alta risoluzione attraverso i seguenti pilastri tecnici:
 
-Le scelte tecniche principali riguardano l'ottimizzazione delle risorse grafiche:
+Context Switching: Mediante la manipolazione delle proprietà CSS (display), il sistema disattiva la pipeline di rendering WebGL per dare priorità al visualizzatore di fotosfere, ottimizzando l'uso di memoria e GPU.
 
-Caricamento Texture: L'uso di oggetti Image() permette un caricamento asincrono degli asset, vincolando la creazione della texture al completamento del download.
+Caricamento Dinamico e Reset: Gli asset visivi vengono caricati in modo asincrono. Al completamento del download, i parametri di trasformazione (imgPos, imgScale) vengono resettati per garantire una navigazione coerente e centrata su ogni nuovo sito.
 
-Ottimizzazione delle prestazioni: Il sistema verifica se le dimensioni delle immagini sono potenze di due ("Power of 2"); in caso positivo, vengono generate le Mipmap per migliorare la resa visiva a diverse risoluzioni.
-
-Gestione Fallback: Per immagini con dimensioni non standard, vengono applicati i parametri CLAMP_TO_EDGE e LINEAR, garantendo un rendering corretto e privo di distorsioni sui bordi.
+Data Binding: La logica di sistema mappa i metadati estratti dal file di configurazione (coordinate geografiche e titoli delle missioni) direttamente nell'interfaccia utente, fornendo informazioni scientifiche in tempo reale.
 
 
 ```JavaScript
