@@ -1,106 +1,308 @@
 {
-    "missioni": [
-        {
-            "id": "apollo11",
-            "titolo": "APOLLO 11 - Mare Tranquillitatis",
-            "lat": 0.6741,
-            "lon": 23.473,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_11_LandingSite.jpg",
-            "width": 16245,
-            "height": 1293,
-            "haov": 180,
-            "hotSpots": []
-        },
-        {
-            "id": "apollo11",
-            "titolo": "APOLLO 11 - Mare Tranquillitatis",
-            "lat": 0.19481,
-            "lon": 23.91207,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_11_Section.jpg",
-            "width": 7817,
-            "height": 2230,
-            "haov": 180,
-            "hotSpots": []
-        },
-        {
-            "id": "apollo12",
-            "titolo": "APOLLO 12 - Oceanus Procellarum",
-            "lat": -3.0124,
-            "lon": -23.4216,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_12_LandingSite.jpg",
-            "width": 16335,
-            "height": 1946,
-            "haov": 180,
-            "hotSpots": []
-        },
-        {
-            "id": "apollo17",
-            "titolo": "APOLLO 17 - Taurus-Littrow",
-            "lat": 20.1908,
-            "lon": 30.7717,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_17_3.jpg",
-            "width": 3600,
-            "height": 427,
-            "haov": 180,
-            "hotSpots": [
-                { "pitch": 12, "yaw": -52, "text": "North Massif" },
-                { "pitch": 9, "yaw": -18, "text": "Sculptured Hills" },
-                { "pitch": 10, "yaw": 22, "text": "East Massif" },
-                { "pitch": 6, "yaw": 38, "text": "Bear Mtn." },
-                { "pitch": 14, "yaw": 62, "text": "South Massif" },
-                { "pitch": 8, "yaw": 88, "text": "Family Mtn." },
-                { "pitch": -5, "yaw": -35, "text": "Camelot Crater" }
-            ]
-        },
-        {
-            "id": "apollo17",
-            "titolo": "APOLLO 17 - Taurus-Littrow",
-            "lat": 19.71151,
-            "lon": 31.21077,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_17_LandingSite.jpg",
-            "width": 16955,
-            "height": 2055,
-            "haov": 180,
-            "hotSpots": [
-                { "pitch": 0, "yaw": -42, "text": "Shorty Crater" },
-                { "pitch": 0, "yaw": -12, "text": "Camelot Crater" },
-                { "pitch": 0, "yaw": 18, "text": "Horatio Crater" },
-                { "pitch": 0, "yaw": 35, "text": "Victory Crater" }
-            ]
-            
-        },
-        {
-            "id": "apollo17",
-            "titolo": "APOLLO 17 - Taurus-Littrow",
-            "lat": 20.27116,
-            "lon": 29.85598,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_17_LandingSite2.jpg",
-            "width": 17611,
-            "height": 1790,
-            "haov": 180,
-            "hotSpots": [
-                { "pitch": -2.1, "yaw": -3.5, "text": "Challenger LM" },
-                { "pitch": 1, "yaw": -12.0, "text": "Lunar Rover (LRV)" },
-                { "pitch": -1.8, "yaw": 65.0, "text": "ALSEP Instrument Array" }
-            ]
-        },
-        {
-            "id": "apollo17",
-            "titolo": "APOLLO 17 - Taurus-Littrow",
-            "lat": 20.87581,
-            "lon": 31.66516,
-            "camera": "Hasselblad 500EL (Reseau Plate)",
-            "file": "photosphere/Apollo_17_Station5_East.jpg",
-            "width": 16810,
-            "height": 1708,
-            "haov": 180,
-            "hotSpots": []
-        }
-    ]
+  "missioni": [
+    {
+      "id": "Apollo 11",
+      "titolo": "APOLLO 11 - Landing Site",
+      "lat": 0.6741,
+      "lon": 23.473,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/11_1.jpg",
+      "width": 16245,
+      "height": 1293,
+      "hotSpots": [
+        { "text": "Cat’s Paw Hills", "x": 1660, "y": 50 }
+      ]
+    },
+    {
+      "id": "Apollo 11",
+      "titolo": "APOLLO 11 - Station 5",
+      "lat": 0.6741,
+      "lon": 23.473,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/11_2.jpg",
+      "width": 7817,
+      "height": 2230,
+      "hotSpots": [
+        { "text": "Little West Crater (33m Diameter)", "x": 3050, "y": 630 }
+      ]
+    },
+    {
+      "id": "Apollo 12",
+      "titolo": "APOLLO 12 - Landing Site",
+      "lat": -3.0124,
+      "lon": -23.4216,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/12_1.jpg",
+      "width": 16335,
+      "height": 1946,
+      "hotSpots": [
+        { "text": "ALSEP", "x": 130, "y": 525 },
+        { "text": "Solar Wind Corrector", "x": 460, "y": 553 },
+        { "text": "Television Camera", "x": 1860, "y": 550 }
+      ]
+    },
+    {
+      "id": "Apollo 12",
+      "titolo": "APOLLO 12 - Landing Site 2",
+      "lat": -3.0124,
+      "lon": -23.4216,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/12_2.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": []
+    },
+    {
+      "id": "Apollo 14",
+      "titolo": "APOLLO 14 - Landing Site",
+      "lat": -3.6453,
+      "lon": -17.4714,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/14_1.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Solar Wind Collector", "x": 1040, "y": 540 },
+        { "text": "Cone Ridge", "x": 3777, "y": 400 }
+      ]
+    },
+    {
+      "id": "Apollo 15",
+      "titolo": "APOLLO 15 - Station 9A",
+      "lat": 26.1322,
+      "lon": 3.6339,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/15_1.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Hill 305", "x": 830, "y": 320 },
+        { "text": "Mt. Hadley", "x": 2877, "y": 210 },
+        { "text": "Swann Hills", "x": 4100, "y": 270 },
+        { "text": "Silver Spur", "x": 4865, "y": 265 },
+        { "text": "Hadley Delta", "x": 5735, "y": 175 }
+      ]
+    },
+    {
+      "id": "Apollo 15",
+      "titolo": "APOLLO 15 - Landing Site",
+      "lat": 26.1322,
+      "lon": 3.6339,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/15_2.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Mt. Hadley", "x": 2190, "y": 350 },
+        { "text": "Swann Hills", "x": 3475, "y": 355 },
+        { "text": "Hadley Delta", "x": 5225, "y": 262 }
+      ]
+    },
+    {
+      "id": "Apollo 15",
+      "titolo": "APOLLO 15 - Eva 1 Station 2",
+      "lat": 26.1322,
+      "lon": 3.6339,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/15_3.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Hadley Rille", "x": 1325, "y": 430 },
+        { "text": "Elbow Crater", "x": 2230, "y": 290 }
+      ]
+    },
+    {
+      "id": "Apollo 15",
+      "titolo": "APOLLO 15 - View from Station 8",
+      "lat": 26.1322,
+      "lon": 3.6339,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/15_4.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Mt. Hadley", "x": 102, "y": 265 },
+        { "text": "Swann Hills", "x": 1232, "y": 212 }
+      ]
+    },
+    {
+      "id": "Apollo 15",
+      "titolo": "APOLLO 15 - Station 8",
+      "lat": 26.1322,
+      "lon": 3.6339,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/15_5.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "ALSEP", "x": 410, "y": 105 },
+        { "text": "LM", "x": 1435, "y": 82 },
+        { "text": "LRV", "x": 1840, "y": 166 }
+      ]
+    },
+    {
+      "id": "Apollo 16",
+      "titolo": "APOLLO 16 - Landing Site",
+      "lat": -8.9730,
+      "lon": 15.4981,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/16_1.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Stone Mountain", "x": 5950, "y": 375 }
+      ]
+    },
+    {
+      "id": "Apollo 16",
+      "titolo": "APOLLO 16 - Station 11",
+      "lat": -8.9730,
+      "lon": 15.4981,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/16_2.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "North Ray Crater (1km Diameter)", "x": 2080, "y": 720 },
+        { "text": "Smoky Mountain", "x": 3440, "y": 325 },
+        { "text": "House Rock", "x": 3650, "y": 515 },
+        { "text": "White Breccia Boulders", "x": 7445, "y": 325 }
+      ]
+    },
+    {
+      "id": "Apollo 16",
+      "titolo": "APOLLO 16 - Station 13",
+      "lat": -8.9730,
+      "lon": 15.4981,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/16_3.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Shadow Rock", "x": 1580, "y": 410 }
+      ]
+    },
+    {
+      "id": "Apollo 16",
+      "titolo": "APOLLO 16 - Station 1",
+      "lat": -8.9730,
+      "lon": 15.4981,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/16_4.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Flag Crater", "x": 1015, "y": 205 },
+        { "text": "Plum Crater", "x": 2015, "y": 265 },
+        { "text": "LRV", "x": 2400, "y": 100 },
+        { "text": "Duke", "x": 2680, "y": 220 },
+        { "text": "South Ray Crater", "x": 4270, "y": 90 }
+      ]
+    },
+    {
+      "id": "Apollo 16",
+      "titolo": "APOLLO 16 - View from Station 10",
+      "lat": -8.9730,
+      "lon": 15.4981,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/16_5.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": []
+    },
+    {
+      "id": "Apollo 16",
+      "titolo": "APOLLO 16 - Landing Site 2",
+      "lat": -8.9730,
+      "lon": 15.4981,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/16_6.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": []
+    },
+    {
+      "id": "Apollo 17",
+      "titolo": "APOLLO 17 - Landing Site",
+      "lat": 20.1908,
+      "lon": 30.7717,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/17_1.jpg",
+      "width": 3600,
+      "height": 427,
+      "hotSpots": [
+        { "text": "Family Mt.", "x": 1130, "y": 500 },
+        { "text": "Lincoln Scarp", "x": 1767, "y": 510 },
+        { "text": "North Massif", "x": 2825, "y": 265 },
+        { "text": "Sculptured Hills", "x": 4360, "y": 380 },
+        { "text": "East Massif", "x": 5900, "y": 380 },
+        { "text": "Bear Mt.", "x": 6690, "y": 425 },
+        { "text": "South Massif", "x": 7900, "y": 255 }
+      ]
+    },
+    {
+      "id": "Apollo 17",
+      "titolo": "APOLLO 17 - ALSEP Station",
+      "lat": 19.71151,
+      "lon": 31.21077,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/17_2.jpg",
+      "width": 16955,
+      "height": 2055,
+      "hotSpots": [
+        { "text": "Heat flow experiment", "x": 2780, "y": 715 },
+        { "text": "Deep core neutron flux", "x": 3215, "y": 445 },
+        { "text": "LRV", "x": 3625, "y": 475 },
+        { "text": "RTG", "x": 6080, "y": 800 },
+        { "text": "ALSEP Array", "x": 7470, "y": 570 }
+      ]
+    },
+    {
+      "id": "Apollo 17",
+      "titolo": "APOLLO 17 - Station 1",
+      "lat": 20.27116,
+      "lon": 29.85598,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/17_3.jpg",
+      "width": 17611,
+      "height": 1790,
+      "hotSpots": []
+    },
+    {
+      "id": "Apollo 17",
+      "titolo": "APOLLO 17 - Station 2",
+      "lat": 20.87581,
+      "lon": 31.66516,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/17_4.jpg",
+      "width": 16810,
+      "height": 1708,
+      "hotSpots": []
+    },
+    {
+      "id": "Apollo 17",
+      "titolo": "APOLLO 17 - View from Station 5",
+      "lat": 20.1908,
+      "lon": 30.7717,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/17_5.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": [
+        { "text": "Camelot Crater", "x": 835, "y": 200 }
+      ]
+    },
+    {
+      "id": "Apollo 17",
+      "titolo": "APOLLO 17 - Station 3",
+      "lat": 20.1908,
+      "lon": 30.7717,
+      "camera": "Hasselblad 500EL (Reseau Plate)",
+      "file": "photosphere/17_6.jpg",
+      "width": 16000,
+      "height": 2000,
+      "hotSpots": []
+    }
+  ]
 }
