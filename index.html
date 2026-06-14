@@ -130,6 +130,29 @@
         .panorama-item.active::before {
             background: rgba(0, 0, 0, 0.3);
         }
+        .lunar-hotspot {
+            position: absolute;
+            background: rgba(0, 10, 0, 0.85);
+            color: var(--nasa);
+            border: 1px solid var(--nasa);
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: auto;
+            transform: translate(-50%, -50%); /* Centra l'hotspot sul punto esatto */
+            cursor: help;
+        }
+        .lunar-hotspot::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -6px;
+            transform: translateY(-50%);
+            border-width: 4px 6px 4px 0;
+            border-style: solid;
+            border-color: transparent var(--nasa) transparent transparent;
+        }
     </style>
 </head>
 <body>
@@ -140,7 +163,12 @@
     </div>
 
     <div id="canvas-container"></div>
-    <div id="panorama"><img id="lunar-img" src="" alt="Lunar Surface"></div>
+    <div id="panorama">
+        <div id="panorama-wrapper" style="position: absolute; height: 100%; top: 0; left: 50%; transform-origin: center center; will-change: transform;">
+            <img id="lunar-img" src="" alt="Lunar Surface" style="position: relative; height: 100%; width: auto; display: block; left: 0; transform: none; pointer-events: none;">
+            <div id="hotspot-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+        </div>
+    </div>
     <div id="data-box"><div id="d-id">---</div><div id="d-coords">---</div></div>
     <div id="panorama-menu">
         <div id="panorama-menu-toggle">EXPLORE LOCATIONS</div>
@@ -304,13 +332,22 @@
         }
 
         function updateImgTransform() {
-            const el = document.getElementById('lunar-img');
+            const wrapper = document.getElementById('panorama-wrapper');
+            const img = document.getElementById('lunar-img');
             const containerWidth = window.innerWidth;
-            const renderedWidth = el.getBoundingClientRect().width;
+            
+            // Calcoliamo la larghezza effettiva renderizzata dell'immagine basandoci sullo scale
+            const renderedWidth = img.getBoundingClientRect().width;
             const limit = (renderedWidth - containerWidth) / 2;
-            if (renderedWidth > containerWidth) { imgPos = Math.min(Math.max(imgPos, -limit), limit); }
-            else { imgPos = 0; }
-            el.style.transform = `translateX(calc(-50% + ${imgPos}px)) scale(${imgScale})`;
+            
+            if (renderedWidth > containerWidth) { 
+                imgPos = Math.min(Math.max(imgPos, -limit), limit); 
+            } else { 
+                imgPos = 0; 
+            }
+            
+            // Spostiamo e zoomiamo l'intero wrapper (immagine + hotspot insieme)
+            wrapper.style.transform = `translateX(calc(-50% + ${imgPos}px)) scale(${imgScale})`;
         }
 
         function onClick(e) {
@@ -329,9 +366,43 @@
             document.getElementById('panorama').style.display = 'block';
             document.getElementById('back-btn').style.display = 'block';
             document.getElementById('data-box').style.display = 'block';
+            
             const imgEl = document.getElementById('lunar-img');
+            const overlayEl = document.getElementById('hotspot-overlay');
+            
+            // Svuota gli hotspot precedenti
+            overlayEl.innerHTML = '';
+            
             imgEl.src = cfg.file;
-            imgEl.onload = () => { imgPos = 0; imgScale = 1; velocity = 0; updateImgTransform(); };
+            imgEl.onload = () => { 
+                imgPos = 0; 
+                imgScale = 1; 
+                velocity = 0; 
+                updateImgTransform(); 
+                
+                // Genera i nuovi hotspot basati sui pixel reali dell'immagine originale
+                if (cfg.hotSpots && cfg.hotSpots.length > 0) {
+                    // Otteniamo le dimensioni naturali dell'immagine caricata
+                    const naturalW = imgEl.naturalWidth;
+                    const naturalH = imgEl.naturalHeight;
+                    
+                    cfg.hotSpots.forEach(hs => {
+                        const spot = document.createElement('div');
+                        spot.className = 'lunar-hotspot';
+                        spot.innerText = hs.text;
+                        
+                        // Calcola la posizione percentuale basandosi sulle coordinate in px del JSON
+                        const pctX = (hs.x / naturalW) * 100;
+                        const pctY = (hs.y / naturalH) * 100;
+                        
+                        spot.style.left = `${pctX}%`;
+                        spot.style.top = `${pctY}%`;
+                        
+                        overlayEl.appendChild(spot);
+                    });
+                }
+            };
+            
             document.getElementById('d-id').innerText = cfg.titolo;
             document.getElementById('d-coords').innerText = `${cfg.lat.toFixed(3)}N / ${cfg.lon.toFixed(3)}E`;
             
@@ -344,7 +415,6 @@
             
             if(sameMission.length > 1) {
                 menuEl.style.display = 'block';
-                // Aggiungi click handler al toggle
                 document.getElementById('panorama-menu-toggle').onclick = () => {
                     menuEl.classList.toggle('open');
                 };
@@ -357,7 +427,7 @@
                     item.textContent = mission.titolo.substring(mission.titolo.lastIndexOf('-') + 1).trim() || `Location ${idx + 1}`;
                     item.onclick = () => {
                         enterStreetView(mission);
-                        menuEl.classList.remove('open'); // Chiudi il menu dopo la selezione
+                        menuEl.classList.remove('open');
                     };
                     itemsContainer.appendChild(item);
                 });
