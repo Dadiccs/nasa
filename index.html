@@ -35,6 +35,22 @@
             z-index: 9999;
             pointer-events: none;
         }
+
+        #zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 8px;
+            background: var(--nasa);
+            cursor: pointer;
+        }
+        #zoom-slider::-moz-range-thumb {
+            width: 16px;
+            height: 8px;
+            background: var(--nasa);
+            cursor: pointer;
+            border: none;
+        }
         
         #panorama-menu {
             position: absolute;
@@ -140,7 +156,7 @@
             font-size: 11px;
             white-space: nowrap;
             pointer-events: auto;
-            transform: translate(-50%, -50%); /* Centra l'hotspot sul punto esatto */
+            transform: translate(-50%, -50%);
             cursor: help;
         }
         .lunar-hotspot::before {
@@ -156,6 +172,11 @@
     </style>
 </head>
 <body>
+    <div id="zoom-container" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--nasa); font-family: inherit; pointer-events: auto;">
+        <span style="font-size: 14px; font-weight: bold;">+</span>
+        <input type="range" id="zoom-slider" min="-18.0" max="-5.2" step="0.1" value="-18.0" style="writing-mode: vertical-lr; direction: rtl; width: 8px; height: 200px; -webkit-appearance: none; background: rgba(0, 255, 65, 0.2); border: 1px solid var(--nasa); outline: none; cursor: pointer;">
+        <span style="font-size: 14px; font-weight: bold;">-</span>
+    </div>
 
     <div id="ui">
         <div style="font-weight: bold; letter-spacing: 2px;">LUNAR_ARCHIVE_EXPLORER // SCAN_MODE</div>
@@ -182,7 +203,7 @@
         // --- PARAMETRI DI CONTROLLO ---
         const ZOOM_LEVEL_MISSION = 5.0;  // Distanza ravvicinata
         const ZOOM_THRESHOLD = 5.75;      // Soglia cambio modalità (Orbita -> Superficie)
-        const REAPPEAR_MARGIN = 0.2;     // Quanta distanza serve per far ricomparire le etichette (più basso = più veloce)
+        const REAPPEAR_MARGIN = 0.2;     // Quanta distanza serve per far ricomparire le etichette
         // ------------------------------
 
         let scene, camera, renderer, labelRenderer, moon, raycaster, mouse;
@@ -192,13 +213,13 @@
 
         let isAutoRotating = false;
         let targetRotation = { x: 0, y: 0 };
-        let activeLabel = null; // Memorizza l'elemento DOM dell'etichetta cliccata
+        let activeLabel = null; 
 
         let imgPos = 0, imgScale = 1, velocity = 0, isImgDragging = false, lastMouseX = 0;
         const friction = 0.94;
         
-        let allMissions = []; // Memorizza tutti i dati delle missioni
-        let currentMissionId = null; // Missione attualmente visualizzata
+        let allMissions = []; 
+        let currentMissionId = null; 
 
         async function init() {
             scene = new THREE.Scene();
@@ -229,7 +250,7 @@
             try {
                 const res = await fetch('config.json');
                 const data = await res.json();
-                allMissions = data.missioni; // Salva i dati globalmente
+                allMissions = data.missioni; 
                 setupMissions(data.missioni);
             } catch(e) { console.error("Config missing"); }
 
@@ -242,28 +263,78 @@
             window.addEventListener('wheel', onWheel, {passive: false});
             window.addEventListener('click', onClick);
             window.addEventListener('resize', onWindowResize);
+  
+            // Controllo dello slider di zoom (Invertito)
+            const slider = document.getElementById('zoom-slider');
+            slider.addEventListener('input', (e) => {
+                // Il meno davanti inverte il valore negativo dello slider in positivo per Three.js
+                targetZ = -parseFloat(e.target.value); 
+                isAutoRotating = false;
+                lastInteraction = Date.now();
+            });
 
             animate();
         }
 
         function setupMissions(missions) {
             const groups = {};
-            missions.forEach(m => {
-                const phi = (90 - m.lat) * (Math.PI / 180);
-                const theta = (m.lon + 180) * (Math.PI / 180);
+            
+            // --- CONFIGURAZIONE DISPERSIONE (Modifica questi valori per distanziare) ---
+            const GOLDEN_ANGLE = 2.39996; 
+            const DISTANCE_FACTOR = 0.6;  // Raggio di crescita della spirale ad ogni passo
+            const MIN_RADIUS = 0.3;       // Distanza minima dal centro dell'allunaggio per il primo punto
+            // -------------------------------------------------------------------------
+
+            // Manteniamo un contatore separato per OGNI missione per far funzionare la spirale ovunque
+            const missionCounters = {};
+
+            missions.forEach((m) => {
+                const missionID = m.id.toUpperCase();
                 
-                const disc = new THREE.Mesh(new THREE.CircleGeometry(0.025, 32), new THREE.MeshBasicMaterial({color: 0x00ff41, side: THREE.DoubleSide}));
+                // Se è la prima volta che incontriamo questa missione, inizializziamo il suo contatore a 0
+                if (missionCounters[missionID] === undefined) {
+                    missionCounters[missionID] = 0;
+                }
+                
+                // 'n' rappresenta l'indice della foto dentro la SUA specifica missione
+                const n = missionCounters[missionID];
+                missionCounters[missionID]++; // Incrementiamo per la prossima foto della stessa missione
+
+                // Calcolo della spirale di Fermat locale
+                const angle = n * GOLDEN_ANGLE;
+                const radius = MIN_RADIUS + (DISTANCE_FACTOR * Math.sqrt(n));
+
+                // Spostamento diretto in gradi sferici (Latitudine e Longitudine)
+                // Usiamo il coseno e il seno dell'angolo moltiplicati per il raggio della spirale
+                const finalLat = m.lat + (radius * Math.cos(angle));
+                const finalLon = m.lon + (radius * Math.sin(angle));
+
+                const phi = (90 - finalLat) * (Math.PI / 180);
+                const theta = (finalLon + 180) * (Math.PI / 180);
+                
+                // Creazione del mesh del cerchietto (leggermente più grande per facilitare il clic)
+                const disc = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.04, 32), 
+                    new THREE.MeshBasicMaterial({color: 0x00ff41, side: THREE.DoubleSide})
+                );
+                
                 disc.position.set(-(4.02 * Math.sin(phi) * Math.cos(theta)), 4.02 * Math.cos(phi), 4.02 * Math.sin(phi) * Math.sin(theta));
                 disc.lookAt(0,0,0);
                 disc.userData = m;
-                disc.visible = false;
+                disc.visible = true; 
                 moon.add(disc);
                 landingSites.push(disc);
 
-                const groupID = m.id.toUpperCase();
-                if(!groups[groupID]) groups[groupID] = { phi, theta, name: groupID };
+                // Configurazione dell'ancora per il testone di testo (es. "APOLLO 15")
+                // Lo teniamo fisso sulle coordinate base del sito di allunaggio (quando n era 0)
+                if(!groups[missionID]) {
+                    const basePhi = (90 - m.lat) * (Math.PI / 180);
+                    const baseTheta = (m.lon + 180) * (Math.PI / 180);
+                    groups[missionID] = { phi: basePhi, theta: baseTheta, name: missionID };
+                }
             });
 
+            // Generazione dei cartelli delle missioni
             for(let id in groups) {
                 const g = groups[id];
                 const div = document.createElement('div');
@@ -280,8 +351,6 @@
                     targetRotation.y = -g.theta + Math.PI/2;
                     targetRotation.x = -(g.phi - Math.PI/2);
 
-                    console.log(`Clicked: ${g.name}, phi: ${g.phi}, theta: ${g.theta}, targetX: ${targetRotation.x}, targetY: ${targetRotation.y}`);
-
                     if (moon.rotation.y - targetRotation.y > Math.PI) targetRotation.y += Math.PI * 2;
                     if (moon.rotation.y - targetRotation.y < -Math.PI) targetRotation.y -= Math.PI * 2;
 
@@ -290,7 +359,7 @@
                 };
 
                 const lbl = new THREE.CSS2DObject(div);
-                lbl.labelDiv = div; // Salva il riferimento al div
+                lbl.labelDiv = div; 
                 lbl.position.set(-(4.1 * Math.sin(g.phi) * Math.cos(g.theta)), 4.1 * Math.cos(g.phi), 4.1 * Math.sin(g.phi) * Math.sin(g.theta));
                 moon.add(lbl);
                 missionGroups.push(lbl);
@@ -325,7 +394,8 @@
                 imgScale = Math.min(Math.max(imgScale - e.deltaY * 0.001, 1), 5);
                 updateImgTransform();
             } else {
-                targetZ = Math.min(Math.max(camera.position.z + e.deltaY * 0.012, 4.0), 25);
+                // Sostituisci questa riga per limitare lo zoom tra 4.2 e 18.0
+                targetZ = Math.min(Math.max(camera.position.z + e.deltaY * 0.012, 4.2), 18.0);
                 isAutoRotating = false;
                 lastInteraction = Date.now();
             }
@@ -336,7 +406,6 @@
             const img = document.getElementById('lunar-img');
             const containerWidth = window.innerWidth;
             
-            // Calcoliamo la larghezza effettiva renderizzata dell'immagine basandoci sullo scale
             const renderedWidth = img.getBoundingClientRect().width;
             const limit = (renderedWidth - containerWidth) / 2;
             
@@ -346,7 +415,6 @@
                 imgPos = 0; 
             }
             
-            // Spostiamo e zoomiamo l'intero wrapper (immagine + hotspot insieme)
             wrapper.style.transform = `translateX(calc(-50% + ${imgPos}px)) scale(${imgScale})`;
         }
 
@@ -364,16 +432,17 @@
         function enterStreetView(cfg) {
             document.getElementById('canvas-container').style.display = 'none';
             document.getElementById('panorama').style.display = 'block';
+            document.getElementById('zoom-container').style.display = 'none';
+            
+            // Garantisce la visibilità del pulsante in qualsiasi scenario di caricamento panoramica
             document.getElementById('back-btn').style.display = 'block';
             document.getElementById('data-box').style.display = 'block';
             
             const imgEl = document.getElementById('lunar-img');
             const overlayEl = document.getElementById('hotspot-overlay');
             
-            // Svuota gli hotspot precedenti
             overlayEl.innerHTML = '';
             
-            // Genera il percorso corretto includendo la sottocartella "Apollo X" dentro photosphere
             const fileName = cfg.file.replace('photosphere/', '');
             const missionNum = fileName.split('_')[0];
             imgEl.src = `photosphere/Apollo ${missionNum}/${fileName}`;
@@ -384,9 +453,7 @@
                 velocity = 0; 
                 updateImgTransform(); 
                 
-                // Genera i nuovi hotspot basati sui pixel reali dell'immagine originale
                 if (cfg.hotSpots && cfg.hotSpots.length > 0) {
-                    // Otteniamo le dimensioni naturali dell'immagine caricata
                     const naturalW = imgEl.naturalWidth;
                     const naturalH = imgEl.naturalHeight;
                     
@@ -395,7 +462,6 @@
                         spot.className = 'lunar-hotspot';
                         spot.innerText = hs.text;
                         
-                        // Calcola la posizione percentuale basandosi sulle coordinate in px del JSON
                         const pctX = (hs.x / naturalW) * 100;
                         const pctY = (hs.y / naturalH) * 100;
                         
@@ -410,7 +476,6 @@
             document.getElementById('d-id').innerText = cfg.titolo;
             document.getElementById('d-coords').innerText = `${cfg.lat.toFixed(3)}N / ${cfg.lon.toFixed(3)}E`;
             
-            // Popola il menu con le altre panoramiche della stessa missione
             currentMissionId = cfg.id;
             const sameMission = allMissions.filter(m => m.id === cfg.id);
             const menuEl = document.getElementById('panorama-menu');
@@ -446,8 +511,10 @@
             document.getElementById('data-box').style.display = 'none';
             document.getElementById('panorama-menu').style.display = 'none';
             document.getElementById('canvas-container').style.display = 'block';
+            document.getElementById('zoom-container').style.display = 'flex';
             currentMissionId = null;
-            targetZ = 18; // Torna alla visualizzazione completa della luna
+            targetZ = 18.0; 
+            document.getElementById('zoom-slider').value = -18.0;
         }
 
         function onWindowResize() {
@@ -457,11 +524,13 @@
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
         }
 
+      
+
         function animate() {
             requestAnimationFrame(animate);
             camera.position.z += (targetZ - camera.position.z) * 0.1;
+            document.getElementById('zoom-slider').value = -camera.position.z;
             
-
             if(isAutoRotating) {
                 moon.rotation.y += (targetRotation.y - moon.rotation.y) * 0.08;
                 moon.rotation.x += (targetRotation.x - moon.rotation.x) * 0.08;
@@ -469,11 +538,29 @@
             }
 
             const isNear = camera.position.z < ZOOM_THRESHOLD;
-            landingSites.forEach(s => s.visible = isNear);
+            // Gestione visibilità: i singoli punti rimangono sempre visibili
+            landingSites.forEach(s => s.visible = true);
             
             missionGroups.forEach(g => {
                 const el = g.labelDiv;
                 const isThisActive = (el === activeLabel);
+
+                // --- CALCOLO DELLA VISIBILITÀ DIETRO LA LUNA ---
+                // 1. Otteniamo la posizione globale dell'etichetta nello spazio 3D
+                const labelWorldPosition = new THREE.Vector3();
+                g.getWorldPosition(labelWorldPosition);
+
+                // 2. Calcoliamo il vettore che va dalla telecamera verso l'etichetta
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+
+                // 3. Il Prodotto Scalare ci dice se l'etichetta è rivolta verso la camera
+                // Sfruttiamo il vettore normalizzato della posizione rispetto al centro della luna
+                const dotProduct = labelWorldPosition.clone().normalize().dot(cameraDirection);
+                
+                // Se il dotProduct è maggiore di -0.2, l'etichetta sta andando sul retro della sfera
+                const isBehind = dotProduct > -0.2; 
+                // -----------------------------------------------
 
                 if (isNear && activeLabel) {
                     if (isThisActive) {
@@ -484,10 +571,18 @@
                         el.style.opacity = '0';
                     }
                 } else {
-                    // Rimuovi fixed-top quando esci dalla zona di zoom
                     el.classList.remove('fixed-top');
-                    el.style.opacity = '1';
-                    // Resetta activeLabel solo quando hai finito di auto-rotare E sei uscito dalla zona
+                    
+                    // Se la missione è dietro, applichiamo la trasparenza (es. opacity 0.15)
+                    // Altrimenti torna visibile al 100%
+                    if (isBehind) {
+                        el.style.opacity = '0.15';
+                        el.style.pointerEvents = 'none'; // Impedisce di cliccarla per errore sul retro
+                    } else {
+                        el.style.opacity = '1';
+                        el.style.pointerEvents = 'auto';
+                    }
+
                     if(!isAutoRotating && !isNear) {
                         activeLabel = null;
                     }
