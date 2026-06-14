@@ -1,99 +1,64 @@
 import os
 import json
-import re
-import math
 from PIL import Image
 
-# 1. COORDINATE UFFICIALI SITI APOLLO (Selenografiche)
-APOLLO_COORDS = {
-    "11": {"lat": 0.6741, "lon": 23.4730, "site": "Mare Tranquillitatis"},
-    "12": {"lat": -3.0124, "lon": -23.4216, "site": "Oceanus Procellarum"},
-    "14": {"lat": -3.6453, "lon": -17.4714, "site": "Fra Mauro"},
-    "15": {"lat": 26.1322, "lon": 3.6339, "site": "Hadley-Apennine"},
-    "16": {"lat": -8.9730, "lon": 15.5002, "site": "Descartes Highlands"},
-    "17": {"lat": 20.1908, "lon": 30.7717, "site": "Taurus-Littrow"}
-}
-
-def generate_config():
-    folder = 'photosphere'
-    if not os.path.exists(folder):
-        print(f"Errore: La cartella '{folder}' non esiste.")
+def update_json_dimensions():
+    json_path = 'config.json'
+    
+    if not os.path.exists(json_path):
+        print(f"Errore: Il file '{json_path}' non esiste.")
         return
 
-    missions_json = []
-    # Inizializza contatori per la distribuzione a spirale
-    mission_counts = {k: 0 for k in APOLLO_COORDS.keys()}
+    # 1. Carica il JSON attuale per non perdere i dati esistenti (hotspots, titoli, coordinate)
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    print("--- INIZIO AGGIORNAMENTO DIMENSIONI IMMAGINI ---")
     
-    # Parametri Spirale di Fermat (Grado di dispersione)
-    GOLDEN_ANGLE = 2.39996  # Angolo aureo in radianti (stretto e ottimizzato)
-    # Aumenta questo valore se i pallini sono ancora troppo vicini
-    DISTANCE_FACTOR = 0.65  
+    updated_count = 0
 
-    print("--- INIZIO ANALISI CARTELLA 'photosphere' ---")
-
-    # Ordinamento deterministico per posizionamento costante
-    files = sorted([f for f in os.listdir(folder) if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
-
-    for filename in files:
-        path = os.path.join(folder, filename)
+    # 2. Cicla sulle missioni presenti nel file JSON
+    for missione in data.get("missioni", []):
+        # Prendiamo il percorso dal campo "file" (es. "photosphere/11_1.jpg")
+        base_file = missione.get("file", "")
+        if not base_file:
+            continue
+            
+        # Estraiamo il nome del file pulito (es. "11_1.jpg")
+        file_name = base_file.replace('photosphere/', '')
+        # Estraiamo il numero della missione prima dell'underscore (es. "11")
+        mission_num = file_name.split('_')[0]
         
-        # Identificazione Missione dal nome file (11-17)
-        match = re.search(r'(11|12|14|15|16|17)', filename)
-        
-        if match:
-            m_id = match.group(1)
-            base = APOLLO_COORDS[m_id]
-            
-            # Algoritmo Spirale
-            n = mission_counts[m_id]
-            mission_counts[m_id] += 1
-            
-            angle = n * GOLDEN_ANGLE
-            radius = DISTANCE_FACTOR * math.sqrt(n)
-            
-            new_lat = base["lat"] + (radius * math.cos(angle))
-            new_lon = base["lon"] + (radius * math.sin(angle))
-            title = f"APOLLO {m_id} - {base['site']}"
+        # Costruiamo il percorso reale della nuova struttura cartelle
+        real_img_path = os.path.join('photosphere', f'Apollo {mission_num}', file_name)
+
+        # 3. Apre l'immagine se esiste e aggiorna unicamente i campi width e height
+        if os.path.exists(real_img_path):
+            try:
+                with Image.open(real_img_path) as img:
+                    w, h = img.size
+                    
+                # Mostra il log se le dimensioni cambiano rispetto a prima
+                if missione.get("width") != w or missione.get("height") != h:
+                    print(f"AGGIORNATO: {file_name} -> Vecchio: {missione.get('width')}x{missione.get('height')} | Nuovo: {w}x{h}")
+                else:
+                    print(f"INVARIATO: {file_name} -> {w}x{h}")
+                    
+                missione["width"] = w
+                missione["height"] = h
+                updated_count += 1
+                
+            except Exception as e:
+                print(f"ERRORE nella lettura dell'immagine {real_img_path}: {e}")
         else:
-            # Fallback se non riconosciuto
-            m_id = "unknown"
-            final_lat = 45.0 + (hash(filename) % 20)
-            final_lon = 0.0 + (hash(filename) % 20)
-            title = "Unknown Landing Site"
+            print(f"ATTENZIONE: Immagine non trovata al percorso: {real_img_path}")
 
-        try:
-            with Image.open(path) as img:
-                w, h = img.size
-            
-            entry = {
-                "id": f"apollo{m_id}",
-                "titolo": title,
-                "lat": round(new_lat, 5),
-                "lon": round(new_lon, 5),
-                "camera": "Hasselblad 500EL (Reseau Plate)",
-                "file": path.replace('\\', '/'),
-                "width": w,
-                "height": h,
-                "haov": 180, # FOV orizzontale di base, sovrascrivilo se necessario
-                # Qui aggiungeremo gli HotSpot misurati
-                "hotSpots": [] 
-            }
-            missions_json.append(entry)
-            print(f"PROCESSATO: {filename} -> Missione {m_id} (Cluster n.{n})")
-            
-        except Exception as e:
-            print(f"ERRORE su {filename}: {e}")
-
-    # Scrittura JSON (encoding utf-8 per caratteri speciali)
-    output_data = {"missioni": missions_json}
-    with open('config.json', 'w', encoding='utf-8') as f:
-        json.dump(output_data, f, indent=4, ensure_ascii=False)
+    # 4. Riscrittura del file JSON con i vecchi dati intatti e le nuove dimensioni
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
     print("---")
-    print(f"Operazione completata! Generati {len(missions_json)} Punti di Interesse in 'config.json'.")
-    for m, count in mission_counts.items():
-        if count > 0:
-            print(f"Apollo {m}: {count} file distribuiti a spirale.")
+    print(f"Operazione completata! Aggiornate le dimensioni di {updated_count} panoramiche in '{json_path}'.")
 
 if __name__ == "__main__":
-    generate_config()
+    update_json_dimensions()
