@@ -458,13 +458,13 @@ function animate() {
     const idleTime = Date.now() - lastInteraction;
     const hintEl = document.getElementById('idle-hint');
 
-    if (idleTime > 10000 && document.getElementById('panorama').style.display !== 'block') {
+    if (idleTime > 8000 && document.getElementById('panorama').style.display !== 'block') {
         hintEl.style.opacity = '0.5';
     } else {
         hintEl.style.opacity = '0';
     }
 
-    if (!isDragging && !isAutoRotating && idleTime > 15000) {
+    if (!isDragging && !isAutoRotating && idleTime > 8000) {
         moon.rotation.y += 0.0003;
     }
     
