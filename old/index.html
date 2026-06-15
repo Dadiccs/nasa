@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Lunar Landing Archive</title>
+    <style>
+        :root { --nasa: #00ff41; --bg: rgba(0, 10, 0, 0.85); }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+        #canvas-container { position: absolute; width: 100%; height: 100%; z-index: 10; cursor: grab; }
+        #panorama { position: absolute; width: 100%; height: 100%; z-index: 5; display: none; background: #000; overflow: hidden; cursor: grab; user-select: none; }
+        #panorama-wrapper { position: absolute; height: 100%; top: 0; left: 50%; transform-origin: center center; will-change: transform; }
+        #lunar-img { height: 100%; width: auto; display: block; position: relative; left: 0; transform: none; pointer-events: none; }
+        
+        /* Barra Superiore Orizzontale */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            z-index: 100;
+            background: rgba(0, 5, 0, 0.85);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            padding: 0 40px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: auto;
+        }
+
+        /* Sezione Header (Vista Luna) */
+        #header-container { display: flex; flex-direction: column; color: var(--nasa); }
+        
+        /* Pulsante Info Tecnico ed Essenziale */
+        #info-toggle-btn {
+            background: transparent;
+            color: var(--nasa);
+            border: 1px solid var(--nasa);
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        #info-toggle-btn:hover {
+            background: rgba(0, 255, 65, 0.1);
+        }
+        #info-toggle-btn.active {
+            background: var(--nasa);
+            color: #000;
+        }
+
+        /* Pannello Informativo a Scomparsa */
+        #info-zone { 
+            display: none;
+            position: absolute;
+            top: 90px;
+            right: 40px;
+            background: var(--bg);
+            border: 1px solid var(--nasa);
+            border-top: none;
+            padding: 24px; 
+            color: var(--nasa); 
+            font-size: 13px; 
+            max-width: 450px; 
+            line-height: 1.5; 
+            z-index: 99;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* Contenitore Elementi in Vista Panoramica */
+        #panorama-controls {
+            display: none; 
+            align-items: center;
+            gap: 24px;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        #left-controls-group { display: flex; align-items: center; gap: 24px; }
+        #right-menus-group { display: flex; align-items: center; gap: 16px; }
+        
+        /* Pulsante di Ritorno */
+        #back-btn { 
+            background: transparent; 
+            color: var(--nasa); 
+            border: 2px solid var(--nasa); 
+            padding: 12px 20px; 
+            font-family: inherit; 
+            font-size: 15px; 
+            font-weight: bold;
+            /*text-transform: uppercase;*/
+            letter-spacing: 1px;
+            cursor: pointer; 
+            white-space: nowrap;
+            transition: background 0.15s ease, color 0.15s ease; 
+        }
+        #back-btn:hover { background: var(--nasa); color: #000000; }
+
+        /* Box Dati Missione */
+        #data-box { 
+            background: rgba(0, 20, 0, 0.4); 
+            border-left: 2px solid var(--nasa); 
+            padding: 4px 16px; 
+            color: var(--nasa); 
+        }
+        
+        /* Menu a Tendina */
+        .dropdown-menu {
+            position: relative;
+            background: var(--bg);
+            border: 1px solid var(--nasa);
+            padding: 0;
+            color: var(--nasa);
+            min-width: 260px;
+        }
+        
+        .dropdown-toggle {
+            background: transparent;
+            color: var(--nasa);
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+            text-align: left;
+            transition: all 0.1s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .dropdown-toggle:hover { background: var(--nasa); color: #000; }
+        .dropdown-menu.open .dropdown-toggle::after { content: '▲'; }
+        .dropdown-toggle::after { content: '▼'; font-size: 11px; margin-left: 12px; }
+        
+        .dropdown-items { 
+            position: absolute;
+            top: 100%;
+            left: -1px;
+            width: calc(100% + 2px);
+            max-height: 300px; 
+            overflow-y: auto; 
+            display: none; 
+            background: rgba(0, 10, 0, 0.95);
+            border: 1px solid var(--nasa);
+            z-index: 110;
+        }
+        .dropdown-menu.open .dropdown-items { display: block; }
+        
+        .panorama-item, .hotspot-item {
+            padding: 12px 18px;
+            border-top: 1px solid rgba(0, 255, 65, 0.15);
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .panorama-item:hover, .hotspot-item:hover { background: rgba(0, 255, 65, 0.1); }
+        .panorama-item.active { background: var(--nasa); color: #000; }
+        .panorama-item::before {
+            content: attr(data-idx);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            background: rgba(0, 255, 65, 0.15);
+            border-radius: 2px;
+            font-size: 11px;
+            margin-right: 10px;
+        }
+        .panorama-item.active::before { background: rgba(0, 0, 0, 0.2); color: #000; }
+
+        /* Etichette Orbita 3D */
+        .mission-label { 
+            color: var(--nasa); 
+            background: rgba(0, 0, 0, 0.85); 
+            padding: 10px 20px; 
+            border: 1px solid var(--nasa); 
+            font-size: 16px; 
+            white-space: nowrap; 
+            pointer-events: auto; 
+            cursor: pointer;
+        }
+        .mission-label:hover { background: var(--nasa); color: #000; }
+        .mission-label.fixed-top {
+            position: fixed !important;
+            top: 120px !important; 
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 9999;
+            pointer-events: none;
+            font-size: 18px !important;
+        }
+
+        /* Controllo Zoom */
+        #zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 10px; background: var(--nasa); cursor: pointer; }
+        #zoom-slider::-moz-range-thumb { width: 20px; height: 10px; background: var(--nasa); cursor: pointer; border: none; }
+        
+        /* Hotspots */
+        .lunar-hotspot-container {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 200;
+        }
+        .hotspot-trigger {
+            width: 16px;
+            height: 16px;
+            background: var(--nasa);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+        }
+        .hotspot-trigger::after {
+            content: ''; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
+            border: 1px solid var(--nasa); border-radius: 50%; opacity: 0; transition: opacity 0.2s ease;
+        }
+        .hotspot-trigger:hover::after { opacity: 1; }
+        .hotspot-content {
+            display: none; position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+            background: var(--bg); color: var(--nasa); border: 1px solid var(--nasa);
+            padding: 10px 14px; font-size: 14px; white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer;
+            transition: background 0.1s ease, color 0.1s ease;
+        }
+        .hotspot-content:hover { background: var(--nasa); color: #000000; font-weight: bold; }
+        .lunar-hotspot-container.open .hotspot-content { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="zoom-container" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--nasa); font-family: inherit; pointer-events: auto;">
+        <span style="font-size: 18px; font-weight: bold;">+</span>
+        <input type="range" id="zoom-slider" min="-18.0" max="-4.2" step="0.1" value="-18.0" style="writing-mode: vertical-lr; direction: rtl; width: 10px; height: 220px; -webkit-appearance: none; background: rgba(0, 255, 65, 0.15); border: 1px solid var(--nasa); outline: none; cursor: pointer;">
+        <span style="font-size: 18px; font-weight: bold;">-</span>
+    </div>
+
+    <div id="top-bar">
+        <div id="header-container">
+            <h1 style="font-size: 20px; font-weight: normal; margin: 0 0 4px 0; letter-spacing: 0.5px;">Lunar Landing Archive</h1>
+            <p style="font-size: 12px; margin: 0; opacity: 0.5; letter-spacing: 0.5px;">NASA photography database</p>
+        </div>
+        
+        <button id="info-toggle-btn" onclick="toggleInfoZone(event)">Info</button>
+
+        <div id="info-zone">
+            <strong>Lunar Landing Archive</strong><br><br>
+            Archivio cartografico ed esplorativo delle storiche missioni lunari Apollo della NASA.<br><br>
+            • <strong>Esplorazione:</strong> Trascina la superficie della Luna per ruotare il globo 3D.<br>
+            • <strong>Zoom:</strong> Usa la rotella del mouse o lo slider laterale per avvicinarti alla superficie.<br>
+            • <strong>Archivio:</strong> Raggiungi lo zoom massimo o clicca direttamente sui vettori di allunaggio per aprire i panorami fotografici immersivi a terra.
+        </div>
+
+        <div id="panorama-controls">
+            <div id="left-controls-group">
+                <button id="back-btn" onclick="exitStreetView()">Torna alla luna</button>
+                <div id="data-box">
+                    <div id="d-id" style="font-size: 15px; font-weight: bold; margin-bottom: 2px; letter-spacing: 0.5px;"></div>
+                    <div id="d-coords" style="font-size: 12px; opacity: 0.6; font-variant-numeric: tabular-nums;"></div>
+                </div>
+            </div>
+            
+            <div id="right-menus-group">
+                <div id="panorama-menu" class="dropdown-menu">
+                    <div id="panorama-menu-toggle" class="dropdown-toggle">Stazioni fotografiche</div>
+                    <div id="panorama-items" class="dropdown-items"></div>
+                </div>
+
+                <div id="hotspot-menu" class="dropdown-menu">
+                    <div id="hotspot-menu-toggle" class="dropdown-toggle">Elementi di interesse</div>
+                    <div id="hotspot-items" class="dropdown-items"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+    
+    <div id="panorama">
+        <div id="panorama-wrapper">
+            <img id="lunar-img" src="" alt="Lunar Surface">
+            <div id="hotspot-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+        </div>
+    </div>
+
+    <div id="idle-hint" style="position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); z-index: 90; color: var(--nasa); font-family: inherit; font-size: 14px; letter-spacing: 0.5px; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; text-align: center; background: rgba(0,0,0,0.7); padding: 6px 16px;">
+        Trascina la Luna per ruotarla o seleziona una missione
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <script>
+        const ZOOM_LEVEL_MISSION = 5.0;  
+        const ZOOM_THRESHOLD = 5.75;      
+        
+        let scene, camera, renderer, labelRenderer, moon, raycaster, mouse;
+        let landingSites = [], missionGroups = [];
+        let isDragging = false, lastInteraction = Date.now(), prevMouse = {x:0, y:0};
+        let targetZ = 18;
+
+        let isAutoRotating = false;
+        let targetRotation = { x: 0, y: 0 };
+        let activeLabel = null; 
+
+        let imgPos = 0, imgScale = 1, velocity = 0, isImgDragging = false, lastMouseX = 0;
+        const friction = 0.94;
+        
+        let allMissions = []; 
+        let currentMissionId = null; 
+
+        async function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 18;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            labelRenderer = new THREE.CSS2DRenderer();
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0';
+            labelRenderer.domElement.style.pointerEvents = 'none'; 
+            document.getElementById('canvas-container').appendChild(labelRenderer.domElement);
+
+            const moonTex = new THREE.TextureLoader().load('moon.jpg');
+            moon = new THREE.Mesh(new THREE.SphereGeometry(4, 64, 64), new THREE.MeshPhongMaterial({map: moonTex, shininess:0}));
+            moon.rotation.y = -Math.PI/2; 
+            scene.add(moon);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            dirLight.position.set(8, 6, 8);
+            scene.add(dirLight);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+            try {
+                const res = await fetch('config.json');
+                const data = await res.json();
+                allMissions = data.missioni; 
+                setupMissions(data.missioni);
+            } catch(e) { console.error("Config missing"); }
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            window.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('wheel', onWheel, {passive: false});
+            window.addEventListener('click', onClick);
+            window.addEventListener('resize', onWindowResize);
+  
+            const slider = document.getElementById('zoom-slider');
+            slider.addEventListener('input', (e) => {
+                targetZ = -parseFloat(e.target.value); 
+                isAutoRotating = false;
+                lastInteraction = Date.now();
+            });
+
+            animate();
+        }
+
+        // Funzione per mostrare/nascondere la zona Info
+        function toggleInfoZone(e) {
+            e.stopPropagation();
+            const infoZone = document.getElementById('info-zone');
+            const btn = document.getElementById('info-toggle-btn');
+            if (infoZone.style.display === 'block') {
+                infoZone.style.display = 'none';
+                btn.classList.remove('active');
+            } else {
+                infoZone.style.display = 'block';
+                btn.classList.add('active');
+            }
+        }
+
+        function setupMissions(missions) {
+            const groups = {};
+            const GOLDEN_ANGLE = 2.39996; 
+            const DISTANCE_FACTOR = 0.6;  
+            const MIN_RADIUS = 0.3;       
+            const missionCounters = {};
+
+            missions.forEach((m) => {
+                const missionID = m.id;
+                if (missionCounters[missionID] === undefined) missionCounters[missionID] = 0;
+                
+                const n = missionCounters[missionID];
+                missionCounters[missionID]++; 
+
+                const angle = n * GOLDEN_ANGLE;
+                const radius = MIN_RADIUS + (DISTANCE_FACTOR * Math.sqrt(n));
+                const finalLat = m.lat + (radius * Math.cos(angle));
+                const finalLon = m.lon + (radius * Math.sin(angle));
+
+                const phi = (90 - finalLat) * (Math.PI / 180);
+                const theta = (finalLon + 180) * (Math.PI / 180);
+                
+                const disc = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.04, 32), 
+                    new THREE.MeshBasicMaterial({color: 0x00ff41, side: THREE.DoubleSide})
+                );
+                
+                disc.position.set(-(4.02 * Math.sin(phi) * Math.cos(theta)), 4.02 * Math.cos(phi), 4.02 * Math.sin(phi) * Math.sin(theta));
+                disc.lookAt(0,0,0);
+                disc.userData = m;
+                moon.add(disc);
+                landingSites.push(disc);
+
+                if(!groups[missionID]) {
+                    const basePhi = (90 - m.lat) * (Math.PI / 180);
+                    const baseTheta = (m.lon + 180) * (Math.PI / 180);
+                    groups[missionID] = { phi: basePhi, theta: baseTheta, name: missionID };
+                }
+            });
+
+            for(let id in groups) {
+                const g = groups[id];
+                const div = document.createElement('div');
+                div.className = 'mission-label';
+                div.textContent = g.name;
+                
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    activeLabel = div;
+                    isAutoRotating = true;
+                    
+                    moon.rotation.y %= Math.PI * 2;
+                    moon.rotation.x %= Math.PI * 2;
+                    targetRotation.y = -g.theta + Math.PI/2;
+                    targetRotation.x = -(g.phi - Math.PI/2);
+
+                    if (moon.rotation.y - targetRotation.y > Math.PI) targetRotation.y += Math.PI * 2;
+                    if (moon.rotation.y - targetRotation.y < -Math.PI) targetRotation.y -= Math.PI * 2;
+
+                    targetZ = ZOOM_LEVEL_MISSION; 
+                    lastInteraction = Date.now();
+                };
+
+                const lbl = new THREE.CSS2DObject(div);
+                lbl.labelDiv = div; 
+                lbl.position.set(-(4.1 * Math.sin(g.phi) * Math.cos(g.theta)), 4.1 * Math.cos(g.phi), 4.1 * Math.sin(g.phi) * Math.sin(g.theta));
+                moon.add(lbl);
+                missionGroups.push(lbl);
+            }
+        }
+
+        function onMouseDown(e) {
+            // Chiude il pannello info se l'utente inizia a trascinare la Luna
+            document.getElementById('info-zone').style.display = 'none';
+            document.getElementById('info-toggle-btn').classList.remove('active');
+
+            if (e.clientY <= 90) return;
+
+            if(document.getElementById('panorama').style.display === 'block') { isImgDragging = true; lastMouseX = e.clientX; velocity = 0; }
+            else { isDragging = true; isAutoRotating = false; prevMouse = {x: e.clientX, y: e.clientY}; }
+        }
+
+        function onMouseUp() { isDragging = false; isImgDragging = false; }
+
+        function onMouseMove(e) {
+            if(isDragging && document.getElementById('canvas-container').style.display !== 'none') {
+                const sens = 0.0012 * (camera.position.z / 18); 
+                moon.rotation.y += (e.clientX - prevMouse.x) * sens;
+                moon.rotation.x += (e.clientY - prevMouse.y) * sens;
+                lastInteraction = Date.now();
+            }
+            if(isImgDragging) {
+                const deltaX = e.clientX - lastMouseX;
+                velocity = deltaX; imgPos += deltaX; lastMouseX = e.clientX;
+                updateImgTransform();
+            }
+            prevMouse = {x: e.clientX, y: e.clientY};
+        }
+
+        function onWheel(e) {
+            // Chiude le info all'uso della rotella
+            document.getElementById('info-zone').style.display = 'none';
+            document.getElementById('info-toggle-btn').classList.remove('active');
+
+            if (e.clientY <= 90) return;
+
+            if (document.getElementById('panorama').style.display === 'block') {
+                e.preventDefault();
+                imgScale = Math.min(Math.max(imgScale - e.deltaY * 0.001, 1), 5);
+                updateImgTransform();
+            } else {
+                targetZ = Math.min(Math.max(camera.position.z + e.deltaY * 0.012, 4.2), 18.0);
+                isAutoRotating = false;
+                lastInteraction = Date.now();
+            }
+        }
+
+        function updateImgTransform() {
+            const wrapper = document.getElementById('panorama-wrapper');
+            const img = document.getElementById('lunar-img');
+            const containerWidth = window.innerWidth;
+            const renderedWidth = img.getBoundingClientRect().width;
+            const limit = (renderedWidth - containerWidth) / 2;
+            
+            if (renderedWidth > containerWidth) { imgPos = Math.min(Math.max(imgPos, -limit), limit); } 
+            else { imgPos = 0; }
+            wrapper.style.transform = `translateX(calc(-50% + ${imgPos}px)) scale(${imgScale})`;
+        }
+
+        function onClick(e) {
+            if (e.clientY <= 90 || document.getElementById('panorama').style.display === 'block') return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            if(camera.position.z < ZOOM_THRESHOLD) {
+                const hits = raycaster.intersectObjects(landingSites.filter(s => s.visible));
+                if(hits.length > 0) enterStreetView(hits[0].object.userData);
+            }
+        }
+
+        function enterStreetView(cfg) {
+            document.getElementById('canvas-container').style.display = 'none';
+            document.getElementById('panorama').style.display = 'block';
+            document.getElementById('zoom-container').style.display = 'none';
+            
+            // Chiude e occulta l'area info
+            document.getElementById('info-zone').style.display = 'none';
+            document.getElementById('info-toggle-btn').style.display = 'none';
+            document.getElementById('header-container').style.display = 'none';
+            
+            document.getElementById('panorama-controls').style.display = 'flex';
+            
+            const imgEl = document.getElementById('lunar-img');
+            const overlayEl = document.getElementById('hotspot-overlay');
+            overlayEl.innerHTML = '';
+            
+            const hsMenuEl = document.getElementById('hotspot-menu');
+            const hsItemsContainer = document.getElementById('hotspot-items');
+            hsItemsContainer.innerHTML = '';
+            hsMenuEl.style.display = 'none';
+            
+            const fileName = cfg.file.replace('photosphere/', '');
+            const missionNum = fileName.split('_')[0];
+            imgEl.src = `photosphere/Apollo ${missionNum}/${fileName}`;
+            
+            imgEl.onload = () => { 
+                imgPos = 0; 
+                imgScale = 1; 
+                velocity = 0; 
+                updateImgTransform(); 
+                
+                if (cfg.hotSpots && cfg.hotSpots.length > 0) {
+                    hsMenuEl.style.display = 'block';
+                    document.getElementById('hotspot-menu-toggle').onclick = (e) => {
+                        e.stopPropagation();
+                        hsMenuEl.classList.toggle('open');
+                        document.getElementById('panorama-menu').classList.remove('open');
+                    };
+
+                    const naturalW = imgEl.naturalWidth;
+                    const naturalH = imgEl.naturalHeight;
+                    
+                    cfg.hotSpots.forEach((hs, index) => {
+                        const container = document.createElement('div');
+                        container.className = 'lunar-hotspot-container';
+                        container.id = `hs-container-${index}`;
+                        
+                        const pctX = (hs.x / naturalW) * 100;
+                        const pctY = (hs.y / naturalH) * 100;
+                        container.style.left = `${pctX}%`;
+                        container.style.top = `${pctY}%`;
+                        
+                        const trigger = document.createElement('div');
+                        trigger.className = 'hotspot-trigger';
+                        
+                        const content = document.createElement('div');
+                        content.className = 'hotspot-content';
+                        content.innerText = hs.text;
+                        
+                        content.onclick = (e) => {
+                            e.stopPropagation(); 
+                            const nomeMissione = document.getElementById('d-id').innerText.split(' - ')[0] || "";
+                            const queryRicerca = encodeURIComponent(`${nomeMissione} ${hs.text}`);
+                            window.open(`https://www.google.com/search?q=${queryRicerca}`, '_blank');
+                        };
+                        
+                        trigger.onclick = (e) => {
+                            e.stopPropagation();
+                            focusHotspotElement(container);
+                        };
+                        
+                        container.appendChild(trigger);
+                        container.appendChild(content);
+                        overlayEl.appendChild(container);
+
+                        const hsItem = document.createElement('div');
+                        hsItem.className = 'hotspot-item';
+                        hsItem.textContent = hs.text;
+                        
+                        hsItem.onclick = (e) => {
+                            e.stopPropagation();
+                            const containerWidth = window.innerWidth;
+                            const renderedWidth = imgEl.getBoundingClientRect().width;
+                            const hsRenderedX = (hs.x / naturalW) * renderedWidth;
+                            
+                            imgPos = (renderedWidth / 2) - hsRenderedX;
+                            velocity = 0; 
+                            updateImgTransform();
+                            
+                            hsMenuEl.classList.remove('open');
+                            focusHotspotElement(container);
+                        };
+                        hsItemsContainer.appendChild(hsItem);
+                    });
+                }
+            };
+            
+            document.getElementById('d-id').innerText = cfg.titolo;
+            document.getElementById('d-coords').innerText = `${cfg.lat.toFixed(3)}°N / ${cfg.lon.toFixed(3)}°E`;
+            
+            currentMissionId = cfg.id;
+            const sameMission = allMissions.filter(m => m.id === cfg.id);
+            const menuEl = document.getElementById('panorama-menu');
+            const itemsContainer = document.getElementById('panorama-items');
+            itemsContainer.innerHTML = '';
+            
+            if(sameMission.length > 1) {
+                menuEl.style.display = 'block';
+                document.getElementById('panorama-menu-toggle').onclick = (e) => {
+                    e.stopPropagation();
+                    menuEl.classList.toggle('open');
+                    document.getElementById('hotspot-menu').classList.remove('open');
+                };
+                
+                sameMission.forEach((mission, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'panorama-item';
+                    item.setAttribute('data-idx', idx + 1);
+                    if(mission.file === cfg.file) item.classList.add('active');
+                    
+                    const labelText = mission.titolo.substring(mission.titolo.lastIndexOf('-') + 1).trim() || `Stazione ${idx + 1}`;
+                    item.textContent = labelText;
+                    
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        enterStreetView(mission);
+                        menuEl.classList.remove('open');
+                    };
+                    itemsContainer.appendChild(item);
+                });
+            } else {
+                menuEl.style.display = 'none';
+            }
+
+            window.addEventListener('click', closeAllDropdowns);
+        }
+
+        function closeAllDropdowns() {
+            document.getElementById('panorama-menu').classList.remove('open');
+            document.getElementById('hotspot-menu').classList.remove('open');
+            // Chiude anche le info se aperte cliccando fuori
+            document.getElementById('info-zone').style.display = 'none';
+            document.getElementById('info-toggle-btn').classList.remove('active');
+        }
+
+        function focusHotspotElement(targetContainer) {
+            document.querySelectorAll('.lunar-hotspot-container').forEach(el => {
+                if(el !== targetContainer) el.classList.remove('open');
+            });
+            targetContainer.classList.toggle('open');
+        }
+
+        function exitStreetView() {
+            window.removeEventListener('click', closeAllDropdowns);
+            closeAllDropdowns();
+
+            document.getElementById('panorama').style.display = 'none';
+            document.getElementById('canvas-container').style.display = 'block';
+            document.getElementById('zoom-container').style.display = 'flex';
+            
+            // Ripristina UI Vista Luna
+            document.getElementById('panorama-controls').style.display = 'none';
+            document.getElementById('header-container').style.display = 'flex';
+            document.getElementById('info-toggle-btn').style.display = 'block';
+            
+            currentMissionId = null;
+            targetZ = 18.0; 
+            document.getElementById('zoom-slider').value = -18.0;
+            lastInteraction = Date.now();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            camera.position.z += (targetZ - camera.position.z) * 0.1;
+            document.getElementById('zoom-slider').value = -camera.position.z;
+            
+            if(isAutoRotating) {
+                moon.rotation.y += (targetRotation.y - moon.rotation.y) * 0.08;
+                moon.rotation.x += (targetRotation.x - moon.rotation.x) * 0.08;
+                if(Math.abs(moon.rotation.y - targetRotation.y) < 0.001) isAutoRotating = false;
+            }
+
+            const isNear = camera.position.z < ZOOM_THRESHOLD;
+            landingSites.forEach(s => s.visible = true);
+            
+            missionGroups.forEach(g => {
+                const el = g.labelDiv;
+                const isThisActive = (el === activeLabel);
+
+                const labelWorldPosition = new THREE.Vector3();
+                g.getWorldPosition(labelWorldPosition);
+
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+
+                const dotProduct = labelWorldPosition.clone().normalize().dot(cameraDirection);
+                const isBehind = dotProduct > -0.2; 
+
+                if (isNear && activeLabel) {
+                    if (isThisActive) {
+                        el.classList.add('fixed-top');
+                        el.style.opacity = '1';
+                    } else {
+                        el.classList.remove('fixed-top');
+                        el.style.opacity = '0';
+                    }
+                } else {
+                    el.classList.remove('fixed-top');
+                    
+                    if (isBehind) {
+                        el.style.opacity = '0.15';
+                        el.style.pointerEvents = 'none'; 
+                    } else {
+                        el.style.opacity = '1';
+                        el.style.pointerEvents = 'auto';
+                    }
+
+                    if(!isAutoRotating && !isNear) activeLabel = null;
+                }
+            });
+
+            if(!isImgDragging && Math.abs(velocity) > 0.1) {
+                imgPos += velocity; velocity *= friction; updateImgTransform();
+            }
+
+            const idleTime = Date.now() - lastInteraction;
+            const hintEl = document.getElementById('idle-hint');
+
+            if (idleTime > 10000 && document.getElementById('panorama').style.display !== 'block') {
+                hintEl.style.opacity = '0.5';
+            } else {
+                hintEl.style.opacity = '0';
+            }
+
+            if (!isDragging && !isAutoRotating && idleTime > 15000) {
+                moon.rotation.y += 0.0003;
+            }
+            
+            labelRenderer.render(scene, camera);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

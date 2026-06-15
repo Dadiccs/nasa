@@ -1,0 +1,230 @@
+:root { --nasa: #00ff41; --bg: rgba(0, 10, 0, 0.85); }
+body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+#canvas-container { position: absolute; width: 100%; height: 100%; z-index: 10; cursor: grab; }
+#panorama { position: absolute; width: 100%; height: 100%; z-index: 5; display: none; background: #000; overflow: hidden; cursor: grab; user-select: none; }
+#panorama-wrapper { position: absolute; height: 100%; top: 0; left: 50%; transform-origin: center center; will-change: transform; }
+#lunar-img { height: 100%; width: auto; display: block; position: relative; left: 0; transform: none; pointer-events: none; }
+
+/* Barra Superiore Orizzontale */
+#top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90px;
+    z-index: 100;
+    background: rgba(0, 5, 0, 0.85);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+    padding: 0 40px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: auto;
+}
+
+/* Sezione Header (Vista Luna) */
+#header-container { display: flex; flex-direction: column; color: var(--nasa); }
+
+/* Pulsante Info Tecnico ed Essenziale */
+#info-toggle-btn {
+    background: transparent;
+    color: var(--nasa);
+    border: 1px solid var(--nasa);
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+#info-toggle-btn:hover {
+    background: rgba(0, 255, 65, 0.1);
+}
+#info-toggle-btn.active {
+    background: var(--nasa);
+    color: #000;
+}
+
+/* Pannello Informativo a Scomparsa */
+#info-zone { 
+    display: none;
+    position: absolute;
+    top: 90px;
+    right: 40px;
+    background: var(--bg);
+    border: 1px solid var(--nasa);
+    border-top: none;
+    padding: 24px; 
+    color: var(--nasa); 
+    font-size: 13px; 
+    max-width: 450px; 
+    line-height: 1.5; 
+    z-index: 99;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+/* Contenitore Elementi in Vista Panoramica */
+#panorama-controls {
+    display: none; 
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+#left-controls-group { display: flex; align-items: center; gap: 24px; }
+#right-menus-group { display: flex; align-items: center; gap: 16px; }
+
+/* Pulsante di Ritorno */
+#back-btn { 
+    background: transparent; 
+    color: var(--nasa); 
+    border: 2px solid var(--nasa); 
+    padding: 12px 20px; 
+    font-family: inherit; 
+    font-size: 15px; 
+    font-weight: bold;
+    /*text-transform: uppercase;*/
+    letter-spacing: 1px;
+    cursor: pointer; 
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease; 
+}
+#back-btn:hover { background: var(--nasa); color: #000000; }
+
+/* Box Dati Missione */
+#data-box { 
+    background: rgba(0, 20, 0, 0.4); 
+    border-left: 2px solid var(--nasa); 
+    padding: 4px 16px; 
+    color: var(--nasa); 
+}
+
+/* Menu a Tendina */
+.dropdown-menu {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--nasa);
+    padding: 0;
+    color: var(--nasa);
+    min-width: 260px;
+}
+
+.dropdown-toggle {
+    background: transparent;
+    color: var(--nasa);
+    border: none;
+    padding: 12px 18px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    width: 100%;
+    text-align: left;
+    transition: all 0.1s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+.dropdown-toggle:hover { background: var(--nasa); color: #000; }
+.dropdown-menu.open .dropdown-toggle::after { content: '▲'; }
+.dropdown-toggle::after { content: '▼'; font-size: 11px; margin-left: 12px; }
+
+.dropdown-items { 
+    position: absolute;
+    top: 100%;
+    left: -1px;
+    width: calc(100% + 2px);
+    max-height: 300px; 
+    overflow-y: auto; 
+    display: none; 
+    background: rgba(0, 10, 0, 0.95);
+    border: 1px solid var(--nasa);
+    z-index: 110;
+}
+.dropdown-menu.open .dropdown-items { display: block; }
+
+.panorama-item, .hotspot-item {
+    padding: 12px 18px;
+    border-top: 1px solid rgba(0, 255, 65, 0.15);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.panorama-item:hover, .hotspot-item:hover { background: rgba(0, 255, 65, 0.1); }
+.panorama-item.active { background: var(--nasa); color: #000; }
+.panorama-item::before {
+    content: attr(data-idx);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    background: rgba(0, 255, 65, 0.15);
+    border-radius: 2px;
+    font-size: 11px;
+    margin-right: 10px;
+}
+.panorama-item.active::before { background: rgba(0, 0, 0, 0.2); color: #000; }
+
+/* Etichette Orbita 3D */
+.mission-label { 
+    color: var(--nasa); 
+    background: rgba(0, 0, 0, 0.85); 
+    padding: 10px 20px; 
+    border: 1px solid var(--nasa); 
+    font-size: 16px; 
+    white-space: nowrap; 
+    pointer-events: auto; 
+    cursor: pointer;
+}
+.mission-label:hover { background: var(--nasa); color: #000; }
+.mission-label.fixed-top {
+    position: fixed !important;
+    top: 120px !important; 
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999;
+    pointer-events: none;
+    font-size: 18px !important;
+}
+
+/* Controllo Zoom */
+#zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 10px; background: var(--nasa); cursor: pointer; }
+#zoom-slider::-moz-range-thumb { width: 20px; height: 10px; background: var(--nasa); cursor: pointer; border: none; }
+
+/* Hotspots */
+.lunar-hotspot-container {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 200;
+}
+.hotspot-trigger {
+    width: 16px;
+    height: 16px;
+    background: var(--nasa);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+}
+.hotspot-trigger::after {
+    content: ''; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
+    border: 1px solid var(--nasa); border-radius: 50%; opacity: 0; transition: opacity 0.2s ease;
+}
+.hotspot-trigger:hover::after { opacity: 1; }
+.hotspot-content {
+    display: none; position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--bg); color: var(--nasa); border: 1px solid var(--nasa);
+    padding: 10px 14px; font-size: 14px; white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+.hotspot-content:hover { background: var(--nasa); color: #000000; font-weight: bold; }
+.lunar-hotspot-container.open .hotspot-content { display: block; }
