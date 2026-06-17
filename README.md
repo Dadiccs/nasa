@@ -4,26 +4,22 @@ Docenti: A. Gysin, G. Profeta
 
 Progetto 1: La conquista dello spazio
 
-# LUNAR ARCHIVE EXPLORER
+# Apollo Landing Archive
 Autore: Daniele Falcone \
-[LUNAR ARCHIVE EXPLORER](https://dadiccs.github.io/nasa/)
+[Apollo Landing Archive](https://dadiccs.github.io/nasa/)
 
 
 ## Introduzione e tema
-Il progetto esplora le possibilità dell'interattività digitale attraverso la simulazione visiva di elementi grafici dinamici. Il tema centrale riguarda la manipolazione di oggetti virtuali all'interno di uno spazio web, con l'obiettivo di creare un'esperienza utente fluida e coinvolgente che sfrutti le potenzialità del rendering accelerato.
+Il progetto consiste in un archivio cartografico ed esplorativo interattivo 3D dedicato alle storiche missioni lunari Apollo della NASA. L'obiettivo è centralizzare e rendere accessibile il database fotografico delle stazioni di allunaggio attraverso un'esperienza web immersiva a due livelli di profondità: una visualizzazione macro, in cui l'utente interagisce con un modello tridimensionale della Luna per localizzare geograficamente le missioni, e una visualizzazione micro (Street View), che permette di calarsi direttamente sul suolo lunare navigando all'interno delle fotosfere storiche a terra.
 
 ## Riferimenti progettuali
-Il principale riferimento concettuale e tecnico è rappresentato dal sistema di navigazione di Google Earth e, in particolare, dalla gestione delle sue fotosfere. Il progetto analizza il modo in cui l'utente interagisce con immagini panoramiche e superfici sferiche, cercando di replicare quel senso di immersività e continuità visiva. La ricerca si è focalizzata sulla transizione tra diversi stati dell'immagine e sulla capacità di esplorare contenuti visivi complessi attraverso movimenti fluidi e intuitivi.
-
+Il principale riferimento concettuale e tecnico è rappresentato dal sistema di navigazione di Google Earth e, in particolare, dalla gestione delle sue fotosfere. Il progetto analizza il modo in cui l'utente interagisce con immagini panoramiche e superfici sferiche, cercando di replicare quel senso di immersività e continuità visiva. 
 
 ## Design dell’interfaccia e modalità di interazione
-L'interfaccia è progettata per essere essenziale e funzionale, riducendo al minimo gli elementi di disturbo per focalizzare l'attenzione sull'interazione diretta.
-
-Interattività: L'utente può influenzare il comportamento degli elementi a schermo in tempo reale attraverso il puntatore o il touch.
-
-Risposta visiva: Ogni input scatena una reazione immediata nel rendering, garantendo un feedback costante.
-
-Fluidità: L'implementazione tecnica assicura che il passaggio tra le diverse texture avvenga senza artefatti visivi, mantenendo alta la qualità dell'esperienza d'uso.
+L'interfaccia adotta un'estetica cruda e strutturale ispirata ai terminali operativi della NASA e alla strumentazione di bordo dell'epoca, caratterizzata da una palette cromatica monocromatica verde fosforo su fondo nero e dall'uso del carattere a spaziatura fissa. L'interazione si sviluppa attraverso una transizione fluida basata sui livelli di zoom:
+Rotazione e Navigazione 3D: L'utente può trascinare la sfera lunare per esaminare la superficie o cliccare direttamente sulle etichette delle missioni Apollo per attivare una rotazione automatica con interpolazione che orienta la telecamera verso il punto di allunaggio selezionato.
+Zoom Progressivo Dinamico: Utilizzando la rotella del mouse o lo slider verticale laterale, la telecamera si avvicina alla Luna. Al superamento di una determinata soglia critica di zoom (ZOOM_THRESHOLD), i vettori di allunaggio diventano cliccabili. Raggiungendo lo zoom massimo, l'interfaccia nasconde l'ambiente 3D per caricare la vista panoramica a terra.
+Esplorazione Immersiva e Hotspot: Nella modalità panorama, l'utente può trascinare orizzontalmente la fotosfere per navigare l'ambiente a 360°. All'interno dello spazio d'immagine sono mappati degli hotspot interattivi che evidenziano elementi di interesse scientifico (moduli, strumentazioni, rocce); cliccando su di essi, si apre un pop-up che permette di approfondire la ricerca direttamente sul web. Due menu a tendina laterali consentono di saltare rapidamente tra diverse stazioni fotografiche della stessa missione o di focalizzare la vista su specifici punti di interesse.
 
 
 ## Tecnologia usata
