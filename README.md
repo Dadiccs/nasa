@@ -16,11 +16,9 @@ Il progetto consiste in un archivio cartografico ed esplorativo interattivo 3D d
 Il principale riferimento concettuale e tecnico è rappresentato dal sistema di navigazione di Google Earth e, in particolare, dalla gestione delle sue fotosfere. Il progetto analizza il modo in cui l'utente interagisce con immagini panoramiche e superfici sferiche, cercando di replicare quel senso di immersività e continuità visiva. 
 
 ## Design dell’interfaccia e modalità di interazione
-L'interfaccia adotta un'estetica cruda e strutturale ispirata ai terminali operativi della NASA e alla strumentazione di bordo dell'epoca, caratterizzata da una palette cromatica monocromatica verde fosforo su fondo nero e dall'uso del carattere a spaziatura fissa. L'interazione si sviluppa attraverso una transizione fluida basata sui livelli di zoom:
-Rotazione e Navigazione 3D: L'utente può trascinare la sfera lunare per esaminare la superficie o cliccare direttamente sulle etichette delle missioni Apollo per attivare una rotazione automatica con interpolazione che orienta la telecamera verso il punto di allunaggio selezionato.
-Zoom Progressivo Dinamico: Utilizzando la rotella del mouse o lo slider verticale laterale, la telecamera si avvicina alla Luna. Al superamento di una determinata soglia critica di zoom (ZOOM_THRESHOLD), i vettori di allunaggio diventano cliccabili. Raggiungendo lo zoom massimo, l'interfaccia nasconde l'ambiente 3D per caricare la vista panoramica a terra.
-Esplorazione Immersiva e Hotspot: Nella modalità panorama, l'utente può trascinare orizzontalmente la fotosfere per navigare l'ambiente a 360°. All'interno dello spazio d'immagine sono mappati degli hotspot interattivi che evidenziano elementi di interesse scientifico (moduli, strumentazioni, rocce); cliccando su di essi, si apre un pop-up che permette di approfondire la ricerca direttamente sul web. Due menu a tendina laterali consentono di saltare rapidamente tra diverse stazioni fotografiche della stessa missione o di focalizzare la vista su specifici punti di interesse.
+L’interfaccia adotta un'estetica tecnica e monocromatica in verde fosforo su fondo nero con caratteri a spaziatura fissa strutturandosi su tre livelli di zoom progressivi che permettono prima di ruotare liberamente il modello 3D della Luna orientando la telecamera verso i siti Apollo selezionati poi di attivare i vettori di allunaggio al superamento di una soglia critica e infine di accedere al massimo zoom a una fotosfera panoramica dove navigare l'ambiente attraverso hotspot informativi e menu dedicati alle diverse stazioni fotografiche
 
+[<img src="ReadMe_img.jpg" width="500" alt="Home Page">]()
 
 ## Tecnologia usata
 Il sistema integra la potenza di calcolo grafico di Three.js con una gestione dinamica del DOM tramite JavaScript (ES6+). L'architettura è progettata per gestire il passaggio fluido tra l'ambiente 3D e il visualizzatore di immagini ad alta risoluzione attraverso i seguenti pilastri tecnici:
@@ -33,7 +31,6 @@ Data Binding: La logica di sistema mappa i metadati estratti dal file di configu
 
 
 ```JavaScript
-// Gestione ottimizzata delle texture per il rendering lunare
 function enterStreetView(cfg) {
     // 1. Switch dell'interfaccia
     document.getElementById('canvas-container').style.display = 'none';
