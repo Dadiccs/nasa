@@ -1,0 +1,1 @@
+L'intenzione è quella di creare un sito ispirato a google earth e alla sua visualizzazione delle fotosfere a 360 gradi, ovviamente per il suolo lunare
